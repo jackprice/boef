@@ -22,6 +22,8 @@
 /** along with this program.  If not, see <http://www.gnu.org/licenses/>.    **/
 /******************************************************************************/
 
+#include "config.h"
+
 #include <cstdio>
 #include <cstdlib>
 #include <iostream>
@@ -36,6 +38,10 @@
 #include <sys/user.h>
 #include <sys/ptrace.h>
 #include <sys/param.h> 
+#include <errno.h>
+#ifdef HAVE_MACHINE_REG_H
+	#include <machine/reg.h>
+#endif
 
 #include "main.h"
 #include "modules.h"
@@ -51,16 +57,28 @@ int debug_ptrace_traceme () {
 	#endif
 }
 
+int debug_ptrace_getregs (pid_t pid, void * data) {
+	#ifdef __linux__
+		return (int) ptrace (PTRACE_GETREGS, pid, NULL, data);
+	#endif
+	#ifdef BSD
+		return (int) ptrace (PT_GETREGS, pid, NULL, (int) data);
+	#endif
+}
+
 debug_process::debug_process () {
+	pid = -1;
 	pipe (pfds);
 }
 
 debug_process::debug_process (char * _exec) {
+	pid = -1;
 	pipe (pfds);
 	pid = fork_exec (_exec);
 }
 
 debug_process::debug_process (pid_t _pid) {
+	pid = -1;
 	pipe (pfds);
 	pid = attach_pid (_pid);
 }
@@ -90,6 +108,7 @@ pid_t debug_process::fork_exec (char * _exec) {
 }
 
 pid_t debug_process::attach_pid (pid_t _pid) {
+	printf ("Attaching to process %i...\n", _pid);
 	#ifdef linux
 		if (ptrace (PTRACE_ATTACH, _pid, 0, 0) == -1) {
 			return -1;
@@ -104,4 +123,8 @@ pid_t debug_process::attach_pid (pid_t _pid) {
 		pid = _pid;
 		return pid;
 	#endif
+}
+
+pid_t debug_process::getpid () {
+	return pid;
 }

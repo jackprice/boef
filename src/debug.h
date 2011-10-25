@@ -1,6 +1,11 @@
 #ifndef __DEBUG_H__
 #define __DEBUG_H__
 
+#ifdef __linux__
+#endif
+#ifdef BSD
+#endif
+
 class debug_process {
 	private:
 		pid_t pid;
@@ -13,6 +18,7 @@ class debug_process {
 		~debug_process ();
 		pid_t fork_exec (char * _exec);
 		pid_t attach_pid (pid_t _pid);
+		pid_t getpid ();
 };
 
 #endif

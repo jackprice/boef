@@ -10,5 +10,6 @@ AC_CONFIG_FILES([
 AC_CONFIG_SUBDIRS([modules])
 AC_CHECK_FUNCS([ptrace])
 AC_CHECK_HEADERS([sys/types.h sys/ptrace.h sys/param.h], , AC_MSG_ERROR[required header file missing])
+AC_CHECK_HEADERS([machine/reg.h],,)
 AC_HEADER_STDC
 AC_OUTPUT
