@@ -9,6 +9,17 @@ AC_CONFIG_FILES([
 ])
 AC_CONFIG_SUBDIRS([modules])
 
+## CHECK FEATURES ##
+
+# SQLite
+AC_ARG_ENABLE([sqlite3],
+              AS_HELP_STRING([--disable-sqlite3], [Disable SQLite]))
+AS_IF([test "x$enable_sqlite3" != "xno"], [
+    AC_CHECK_HEADERS([sqlite3.h], , AC_MSG_ERROR[SQLite headers required, use --disable-sqlite3])
+    AC_CHECK_LIB([sqlite3], [sqlite3_open], , , )
+    AC_DEFINE([WITH_SQLITE3], [1], [Define if SQLite is enabled])
+])
+
 ## CHECK PREREQUISITES ##
 
 # Check C Standard Library
@@ -30,6 +41,14 @@ AC_CHECK_HEADERS([sched.h])
 
 # Check for param
 AC_CHECK_HEADERS([sys/param.h])
+
+# Check for pwd
+AC_CHECK_HEADERS([pwd.h])
+
+# Check for stat
+AC_CHECK_HEADERS([sys/stat.h])
+
+# Check for something else, I can't remember what though O_o
 
 # Check for cstd headers
 AC_HEADER_STDC

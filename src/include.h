@@ -44,6 +44,18 @@
 #ifdef HAVE_SYS_PTRACE_H
 	#include <sys/ptrace.h>
 #endif
+#ifdef HAVE_PWD_H
+	#include <pwd.h>
+#endif
+#ifdef HAVE_SYS_STAT_H
+	#include <sys/stat.h>
+#endif
+
+// SQLite3
+
+#ifdef WITH_SQLITE3
+	#include <sqlite3.h>
+#endif
 
 #include "main.h"
 #include "modules.h"

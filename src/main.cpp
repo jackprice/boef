@@ -53,6 +53,9 @@ int main (int argc, char * argv []) {
 			"This is free software, and you are welcome to redistribute it under certain \n"
 			"conditions; type 'show c' for details\n\n",
 			PACKAGE_STRING, PACKAGE_URL);
+	
+	workspace_init ();
+	
 	char input [256];
 	vector <string> args;
 	while (running) {
