@@ -81,7 +81,8 @@ main.o: main.cpp /usr/include/c++/4.5/cstdio \
  /usr/include/c++/4.5/bits/stl_vector.h \
  /usr/include/c++/4.5/bits/stl_bvector.h \
  /usr/include/c++/4.5/bits/vector.tcc /usr/include/c++/4.5/sstream \
- /usr/include/c++/4.5/bits/sstream.tcc main.h modules.h host.h
+ /usr/include/c++/4.5/bits/sstream.tcc ../config.h main.h modules.h \
+ host.h
 
 /usr/include/c++/4.5/cstdio:
 
@@ -332,6 +333,8 @@ main.o: main.cpp /usr/include/c++/4.5/cstdio \
 /usr/include/c++/4.5/sstream:
 
 /usr/include/c++/4.5/bits/sstream.tcc:
+
+../config.h:
 
 main.h:
 

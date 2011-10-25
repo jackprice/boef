@@ -6,6 +6,21 @@
 /**                                                                          **/
 /**                                                                          **/
 /******************************************************************************/
+/** Copyright (C) 2011 Quetuo (http://www.quetuo.net)                        **/
+/**                                                                          **/
+/** This program is free software: you can redistribute it and/or modify     **/
+/** it under the terms of the GNU General Public License as published by     **/
+/** the Free Software Foundation, either version 3 of the License, or        **/
+/** (at your option) any later version.
+/**                                                                          **/
+/** This program is distributed in the hope that it will be useful,          **/
+/** but WITHOUT ANY WARRANTY; without even the implied warranty of           **/
+/** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            **/
+/** GNU General Public License for more details.                             **/
+/**                                                                          **/
+/** You should have received a copy of the GNU General Public License        **/
+/** along with this program.  If not, see <http://www.gnu.org/licenses/>.    **/
+/******************************************************************************/
 
 #include <cstdio>
 #include <cstdlib>
@@ -14,6 +29,8 @@
 #include <dlfcn.h>
 #include <string.h>
 #include <stdarg.h>
+#include <sys/types.h>
+#include <dirent.h>
 
 #include "main.h"
 #include "modules.h"
@@ -149,5 +166,26 @@ void module_printhelp (std::string name) {
 }
 
 void module_listmodules () {
+	printf ("Loaded modules:\n");
+	map <string, void *> :: iterator it;
+	for (it = dl_handles.begin (); it != dl_handles.end (); it ++) {
+		printf ("\t%s\n", it -> first.c_str ());
+	}
+	DIR * dp;
+	struct dirent * dirp;
+	if ((dp = opendir ("modules/")) == NULL) {
+		printf ("Failed to open module directory!\n");
+		return;
+	}
+	printf ("Available modules:\n");
+	while ((dirp = readdir (dp)) != NULL) {
+		if (strstr (dirp -> d_name, ".so.1.0") != NULL) {
+			*(strstr (dirp -> d_name, ".so.1.0")) = 0x00;
+			if (dl_handles.count (dirp -> d_name) == 0) {
+				printf ("\t%s\n", dirp -> d_name);
+			}
+		}
+	}
+	closedir (dp);
 	return;
 }
