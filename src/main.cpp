@@ -22,17 +22,7 @@
 /** along with this program.  If not, see <http://www.gnu.org/licenses/>.    **/
 /******************************************************************************/
 
-#include <cstdio>
-#include <cstdlib>
-#include <iostream>
-#include <string.h>
-#include <vector>
-#include <sstream>
-
-#include "config.h"
-#include "main.h"
-#include "modules.h"
-#include "host.h"
+#include "include.h"
 
 bool running = true;
 
@@ -51,7 +41,13 @@ void printhelp () {
 }
 
 int main (int argc, char * argv []) {
-	printf ("%s Copyright (C) 2011 Quetuo\n"
+	printf ("\n8                     d'b \n"
+			"8                     8   \n"
+			"8oPYo. .oPYo. .oPYo. o8P  \n"
+			"8    8 8    8 8oooo8  8   \n"
+			"8    8 8    8 8.      8   \n"
+			"`YooP' `YooP' `Yooo'  8   \n\n"
+			"%s Copyright (C) 2011 Quetuo\n"
 			"URL: %s\n\n"
 			"This program comes with ABSOLUTELY NO WARRANTY; for details type 'show w'.\n"
 			"This is free software, and you are welcome to redistribute it under certain \n"

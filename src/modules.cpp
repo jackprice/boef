@@ -22,19 +22,7 @@
 /** along with this program.  If not, see <http://www.gnu.org/licenses/>.    **/
 /******************************************************************************/
 
-#include <cstdio>
-#include <cstdlib>
-#include <iostream>
-#include <map>
-#include <dlfcn.h>
-#include <string.h>
-#include <stdarg.h>
-#include <sys/types.h>
-#include <dirent.h>
-
-#include "main.h"
-#include "modules.h"
-#include "host.h"
+#include "include.h"
 
 using namespace std;
 

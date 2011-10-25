@@ -8,8 +8,30 @@ AC_CONFIG_FILES([
  src/Makefile
 ])
 AC_CONFIG_SUBDIRS([modules])
+
+## CHECK PREREQUISITES ##
+
+# Check C Standard Library
+AC_CHECK_HEADERS([stdio.h stdlib.h string.h errno.h stdint.h stdarg.h], , AC_MSG_ERROR[Required C stdlib header missing])
+
+# Check C POSIX Library
+AC_CHECK_HEADERS([unistd.h sys/types.h dirent.h sys/wait.h], , AC_MSG_ERROR[Required C POSIX header missing])
+
+# Check for ptrace
 AC_CHECK_FUNCS([ptrace])
-AC_CHECK_HEADERS([sys/types.h sys/ptrace.h sys/param.h], , AC_MSG_ERROR[required header file missing])
-AC_CHECK_HEADERS([machine/reg.h],,)
+AC_CHECK_HEADERS([machine/reg.h sys/user.h sys/ptrace.h],,)
+
+# Check for dl
+AC_CHECK_LIB([dl], [dlopen], , , )
+AC_CHECK_HEADERS([dlfcn.h],,)
+
+# Check for sched
+AC_CHECK_HEADERS([sched.h])
+
+# Check for param
+AC_CHECK_HEADERS([sys/param.h])
+
+# Check for cstd headers
 AC_HEADER_STDC
+AC_INCLUDES_DEFAULT
 AC_OUTPUT

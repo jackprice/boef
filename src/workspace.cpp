@@ -22,19 +22,6 @@
 /** along with this program.  If not, see <http://www.gnu.org/licenses/>.    **/
 /******************************************************************************/
 
-#include <cstdio>
-#include <cstdlib>
-#include <iostream>
-#include <string.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <stdlib.h>
-#include <errno.h>
-#include <stdint.h>
+#include "include.h"
 
-#include "config.h"
-#include "main.h"
-#include "modules.h"
-#include "host.h"
-#include "debug.h"
 

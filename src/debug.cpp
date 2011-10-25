@@ -22,31 +22,7 @@
 /** along with this program.  If not, see <http://www.gnu.org/licenses/>.    **/
 /******************************************************************************/
 
-#include "config.h"
-
-#include <cstdio>
-#include <cstdlib>
-#include <iostream>
-#include <string.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sched.h>
-#include <stdlib.h>
-#include <errno.h>
-#include <sys/wait.h>
-#include <stdint.h>
-#include <sys/user.h>
-#include <sys/ptrace.h>
-#include <sys/param.h> 
-#include <errno.h>
-#ifdef HAVE_MACHINE_REG_H
-	#include <machine/reg.h>
-#endif
-
-#include "main.h"
-#include "modules.h"
-#include "host.h"
-#include "debug.h"
+#include "include.h"
 
 int debug_ptrace_traceme () {
 	#ifdef __linux__
