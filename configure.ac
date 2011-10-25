@@ -8,4 +8,7 @@ AC_CONFIG_FILES([
  src/Makefile
 ])
 AC_CONFIG_SUBDIRS([modules])
+AC_CHECK_FUNCS([ptrace])
+AC_CHECK_HEADERS([sys/types.h sys/ptrace.h sys/param.h], , AC_MSG_ERROR[required header file missing])
+AC_HEADER_STDC
 AC_OUTPUT

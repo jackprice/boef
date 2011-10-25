@@ -100,7 +100,24 @@ int main (int argc, char * argv []) {
 				}
 				else if (args.size () > 2) {
 					if (args [1] == "exec") {
-						
+						string exec = "";
+						int i;
+						for (i = 2; i < args.size (); i ++) {
+							exec += args [i];
+						}
+						host_exec ((char *) exec.c_str ());
+					}
+					else if (args [1] == "attach" && args.size () == 3) {
+						pid_t pid = atoi (args [2].c_str ());
+						if (pid > 0) {
+							host_attach (pid);
+						}
+						else {
+							printf ("Invalid arguments\n");
+						}
+					}
+					else {
+						printf ("Invalid arguments\n");
 					}
 				}
 				else {

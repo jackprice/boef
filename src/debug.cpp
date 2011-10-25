@@ -35,11 +35,21 @@
 #include <stdint.h>
 #include <sys/user.h>
 #include <sys/ptrace.h>
+#include <sys/param.h> 
 
 #include "main.h"
 #include "modules.h"
 #include "host.h"
 #include "debug.h"
+
+int debug_ptrace_traceme () {
+	#ifdef __linux__
+		return (int) ptrace (PTRACE_TRACEME, 0, 0, 0);
+	#endif
+	#ifdef BSD
+		return (int) ptrace (PT_TRACE_ME, 0, 0, 0);
+	#endif
+}
 
 debug_process::debug_process () {
 	pipe (pfds);
@@ -68,9 +78,7 @@ pid_t debug_process::fork_exec (char * _exec) {
 			close (0);
 			dup2 (0, pfds [0]);
 			close (pfds [1]);
-			#ifdef linux
-				ptrace (PTRACE_TRACEME, 0, 0, 0);
-			#endif
+			debug_ptrace_traceme ();
 			execl (_exec, NULL, NULL);
 			break;
 		case 1:
@@ -84,6 +92,13 @@ pid_t debug_process::fork_exec (char * _exec) {
 pid_t debug_process::attach_pid (pid_t _pid) {
 	#ifdef linux
 		if (ptrace (PTRACE_ATTACH, _pid, 0, 0) == -1) {
+			return -1;
+		}
+		pid = _pid;
+		return pid;
+	#endif
+	#ifdef BSD
+		if (ptrace (PT_ATTACH, _pid, 0, 0) == -1) {
 			return -1;
 		}
 		pid = _pid;

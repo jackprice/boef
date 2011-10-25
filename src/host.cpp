@@ -32,11 +32,34 @@
 #include <errno.h>
 #include <stdint.h>
 
+#include "config.h"
 #include "main.h"
 #include "modules.h"
 #include "host.h"
 #include "debug.h"
 
+debug_process * debug = NULL;
+
+void host_attach (pid_t pid) {
+	if (debug != NULL) {
+		printf ("Host is currently attached, use 'host kill' or 'host detach' to free\n");
+	}
+	debug = new debug_process (pid);
+	return;
+}
+
+void host_exec (char * exec) {
+	if (debug != NULL) {
+		printf ("Host is currently attached, use 'host kill' or 'host detach' to free\n");
+	}
+	printf ("Executing \"%s\"\n", exec);
+	debug = new debug_process (exec);
+	return;
+}
+
 void host_printinfo () {
+	if (debug == NULL) {
+		printf ("Host not currently attached\n");
+	}
 	return;
 }
