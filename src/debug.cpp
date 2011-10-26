@@ -11,7 +11,7 @@
 /** This program is free software: you can redistribute it and/or modify     **/
 /** it under the terms of the GNU General Public License as published by     **/
 /** the Free Software Foundation, either version 3 of the License, or        **/
-/** (at your option) any later version.
+/** (at your option) any later version.                                      **/
 /**                                                                          **/
 /** This program is distributed in the hope that it will be useful,          **/
 /** but WITHOUT ANY WARRANTY; without even the implied warranty of           **/
@@ -76,6 +76,7 @@ pid_t debug_process::fork_exec (char * _exec) {
 			execl (_exec, NULL, NULL);
 			break;
 		case 1:
+			close (pfds [0]);
 			wait (&waitval);
 			break;
 	}
@@ -103,4 +104,49 @@ pid_t debug_process::attach_pid (pid_t _pid) {
 
 pid_t debug_process::getpid () {
 	return pid;
+}
+
+void debug_process::kill () {
+	printf ("Killing process %i...\n", pid);
+	#ifdef linux
+		if (ptrace (PTRACE_KILL, pid, 0, 0) == 0) {
+			pid = 0;
+			exec = NULL;
+		}
+		else {
+			printf ("Could not kill: %.2X\n", errno);
+		}
+		return;
+	#endif
+	#ifdef BSD
+		if (ptrace (PT_KILL, pid, 0, 0) == 0) {
+			pid = 0;
+			exec = NULL;
+		}
+		else {
+			printf ("Could not kill: %.2X\n", errno);
+		}
+		return;
+	#endif
+}
+
+void debug_process::run () {
+	#ifdef linux
+		if (ptrace (PTRACE_CONTINUE, pid, 1, 0) == 0) {
+			
+		}
+		else {
+			printf ("Could not run: %.2X\n", errno);
+		}
+		return;
+	#endif
+	#ifdef BSD
+		if (ptrace (PT_CONTINUE, pid, (caddr_t) 1, 0) == 0) {
+			
+		}
+		else {
+			printf ("Could not run: %.2X\n", errno);
+		}
+		return;
+	#endif
 }

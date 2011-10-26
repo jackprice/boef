@@ -4,5 +4,7 @@
 void host_exec (char * exec);
 void host_printinfo ();
 void host_attach (pid_t pid);
+void host_kill ();
+void host_run ();
 
 #endif

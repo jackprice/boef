@@ -11,7 +11,7 @@
 /** This program is free software: you can redistribute it and/or modify     **/
 /** it under the terms of the GNU General Public License as published by     **/
 /** the Free Software Foundation, either version 3 of the License, or        **/
-/** (at your option) any later version.
+/** (at your option) any later version.                                      **/
 /**                                                                          **/
 /** This program is distributed in the hope that it will be useful,          **/
 /** but WITHOUT ANY WARRANTY; without even the implied warranty of           **/
@@ -29,6 +29,7 @@ debug_process * debug = NULL;
 void host_attach (pid_t pid) {
 	if (debug != NULL) {
 		printf ("Host is currently attached, use 'host kill' or 'host detach' to free\n");
+		return;
 	}
 	debug = new debug_process (pid);
 	if (debug -> getpid () < 0) {
@@ -43,10 +44,31 @@ void host_attach (pid_t pid) {
 void host_exec (char * exec) {
 	if (debug != NULL) {
 		printf ("Host is currently attached, use 'host kill' or 'host detach' to free\n");
+		return;
 	}
 	printf ("Executing \"%s\"\n", exec);
 	debug = new debug_process (exec);
 	return;
+}
+
+void host_kill () {
+	if (debug == NULL) {
+		printf ("Host not currently attached\n");
+		return;
+	}
+	debug -> kill ();
+	if (debug -> getpid () == 0) {
+		delete debug;
+		debug = NULL;
+	}
+}
+
+void host_run () {
+	if (debug == NULL) {
+		printf ("Host not currently attached\n");
+		return;
+	}
+	debug -> run ();
 }
 
 void host_printinfo () {

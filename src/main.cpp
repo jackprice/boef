@@ -11,7 +11,7 @@
 /** This program is free software: you can redistribute it and/or modify     **/
 /** it under the terms of the GNU General Public License as published by     **/
 /** the Free Software Foundation, either version 3 of the License, or        **/
-/** (at your option) any later version.
+/** (at your option) any later version.                                      **/
 /**                                                                          **/
 /** This program is distributed in the hope that it will be useful,          **/
 /** but WITHOUT ANY WARRANTY; without even the implied warranty of           **/
@@ -99,6 +99,17 @@ int main (int argc, char * argv []) {
 			else if (args [0] == "host") {
 				if (args.size () == 1) {
 					host_printinfo ();
+				}
+				else if (args.size () == 2) {
+					if (args [1] == "kill") {
+						host_kill ();
+					}
+					else if (args [1] == "run") {
+						host_run ();
+					}
+					else {
+						printf ("Invalid arguments\n");
+					}
 				}
 				else if (args.size () > 2) {
 					if (args [1] == "exec") {
