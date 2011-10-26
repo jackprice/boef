@@ -32,6 +32,9 @@ int workspace_id = 0;
 #ifdef WITH_SQLITE3
 	sqlite3 * db;
 	char * workspace_db = NULL;
+#else
+	FILE * file = NULL;
+	char * workspace_file = NULL;
 #endif
 
 int workspace_choose (char * ws) {
@@ -60,9 +63,22 @@ int workspace_choose (char * ws) {
 		workspace_id = sqlite3_column_int (stmt, 0);
 		sqlite3_finalize (stmt);
 		workspace = ws;
-		printf ("Workspace %s (%i) selected\n", workspace, workspace_id);
+		printf ("Workspace %s selected\n", workspace);
 		return 0;
 	#else
+		if (file) {
+			fclose (file);
+			file = NULL;
+		}
+		workspace_file = (char *) malloc (strlen (workspace_dir) + strlen (ws) + 6);
+		sprintf (workspace_file, "%s/%s.wsp", workspace_dir, ws);
+		file = fopen (workspace_file, "a");
+		if (file == NULL) {
+			printf ("Could not fopen(3) %s: %.2X\n", workspace_file, errno);
+			return -1;
+		}
+		workspace = ws;
+		printf ("Workspace %s selected\n", workspace);
 		return 0;
 	#endif
 }
@@ -72,7 +88,7 @@ void workspace_init () {
 	workspace_home = getpwuid (getuid ()) -> pw_dir;
 	workspace_dir = (char *) malloc (strlen (workspace_home) + 7);
 	sprintf (workspace_dir, "%s/.boef", workspace_home);
-	printf ("Opening workspace %s in %s...\n", workspace, workspace_dir);
+	printf ("Opening workspace in %s...\n", workspace_dir);
 	
 	// Check whether it exists and create it if it doesn't
 	struct stat buf;
@@ -112,18 +128,37 @@ char * workspace_getname () {
 }
 
 void workspace_log (char * msg) {
+	char * _msg = (char *) malloc (strlen (msg) + 23);
+	sprintf (_msg + 22, "%s", msg);
+	time_t rawtime;
+	struct tm * timeinfo;
+	time (&rawtime);
+	timeinfo = localtime (&rawtime);
+	strftime (_msg, 22, "[%d/%m/%Y %H:%M:%S] ", timeinfo);
 	#ifdef WITH_SQLITE3
 		sqlite3_stmt * stmt;
 		if (sqlite3_prepare (db, "INSERT INTO log (workspace_id, value) VALUES (?, ?);", -1, &stmt, 0) != SQLITE_OK) {
+			free (_msg);
 			return;
 		}
 		if (sqlite3_bind_int (stmt, 1, workspace_id) != SQLITE_OK) {
+			free (_msg);
 			return;
 		}
-		if (sqlite3_bind_text (stmt, 2, (const char *) msg, -1, SQLITE_TRANSIENT) != SQLITE_OK) {
+		if (sqlite3_bind_text (stmt, 2, (const char *) _msg, -1, SQLITE_TRANSIENT) != SQLITE_OK) {
+			free (_msg);
 			return;
 		}
 		sqlite3_step (stmt);
 		sqlite3_finalize (stmt);
+		free (_msg);
+		return;
+	#else
+		if (file != NULL) {
+			fprintf (file, "%s\n", _msg);
+			fflush (file);
+		}
+		free (_msg);
+		return;
 	#endif
 }

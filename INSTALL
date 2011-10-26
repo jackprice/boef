@@ -9,6 +9,7 @@ To install boef, run
 Certain users without the appropriate flags set in their environment may have
 to add these to the ./configure command like so
     ./configure LDFLAGS=-L/usr/local/lib CPPFLAGS=-I/usr/local/include
+or add set them in the environment
 
 To compile without certain features, use the --disable-FEATURE syntax
     ./configure --disable-sqlite3

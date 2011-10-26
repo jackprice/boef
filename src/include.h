@@ -9,6 +9,7 @@
 #include <errno.h>
 #include <stdint.h>
 #include <stdarg.h>
+#include <time.h>
 
 // C POSIX Library
 #include <unistd.h>
