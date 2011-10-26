@@ -1,0 +1,14 @@
+Installation Instructions
+-------------------------
+
+To install boef, run
+    ./configure
+    make
+    make install
+
+Certain users without the appropriate flags set in their environment may have
+to add these to the ./configure command like so
+    ./configure LDFLAGS=-L/usr/local/lib CPPFLAGS=-I/usr/local/include
+
+To compile without certain features, use the --disable-FEATURE syntax
+    ./configure --disable-sqlite3
