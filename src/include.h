@@ -69,3 +69,4 @@
 #include "host.h"
 #include "debug.h"
 #include "workspace.h"
+#include "interface.h"

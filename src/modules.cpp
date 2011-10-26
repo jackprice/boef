@@ -102,7 +102,7 @@ module_func module_getfunction (std::string name) {
 */
 
 void module_cleanup () {
-	printf ("Cleaning up modules...\n");
+	printf ("Cleaning up modules...");
 	map <string, void *> :: iterator it;
 	module_func func;
 	for (it = dl_handles.begin (); it != dl_handles.end (); it ++) {
@@ -114,6 +114,7 @@ void module_cleanup () {
 	}
 	dl_handles.clear ();
 	dl_functions.clear ();
+	interface_printok (true);
 }
 
 /* module_makeargs () 

@@ -38,20 +38,25 @@ int workspace_id = 0;
 #endif
 
 int workspace_choose (char * ws) {
+	printf ("Opening workspace %s...", ws);
 	#ifdef WITH_SQLITE3
 		sqlite3_stmt * stmt;
 		if (sqlite3_prepare (db, "SELECT id FROM workspace WHERE name=?;", -1, &stmt, 0) != SQLITE_OK) {
+			interface_printok (false);
 			return -1;
 		}
 		if (sqlite3_bind_text (stmt, 1, (const char *) ws, -1, SQLITE_TRANSIENT) != SQLITE_OK) {
+			interface_printok (false);
 			return -1;
 		}
 		if (sqlite3_step (stmt) == SQLITE_DONE) {
 			sqlite3_finalize (stmt);
 			if (sqlite3_prepare (db, "INSERT INTO workspace (name) VALUES (?);", -1, &stmt, 0) != SQLITE_OK) {
+				interface_printok (false);
 				return -1;
 			}
 			if (sqlite3_bind_text (stmt, 1, (const char *) ws, -1, SQLITE_TRANSIENT) != SQLITE_OK) {
+				interface_printok (false);
 				return -1;
 			}
 			sqlite3_step (stmt);
@@ -63,7 +68,7 @@ int workspace_choose (char * ws) {
 		workspace_id = sqlite3_column_int (stmt, 0);
 		sqlite3_finalize (stmt);
 		workspace = ws;
-		printf ("Workspace %s selected\n", workspace);
+		interface_printok (true);
 		return 0;
 	#else
 		if (file) {
@@ -74,11 +79,12 @@ int workspace_choose (char * ws) {
 		sprintf (workspace_file, "%s/%s.wsp", workspace_dir, ws);
 		file = fopen (workspace_file, "a");
 		if (file == NULL) {
+			interface_printok (false);
 			printf ("Could not fopen(3) %s: %.2X\n", workspace_file, errno);
 			return -1;
 		}
 		workspace = ws;
-		printf ("Workspace %s selected\n", workspace);
+		interface_printok (true);
 		return 0;
 	#endif
 }
@@ -88,7 +94,8 @@ void workspace_init () {
 	workspace_home = getpwuid (getuid ()) -> pw_dir;
 	workspace_dir = (char *) malloc (strlen (workspace_home) + 7);
 	sprintf (workspace_dir, "%s/.boef", workspace_home);
-	printf ("Opening workspace in %s...\n", workspace_dir);
+	printf ("Opening workspace in %s...", workspace_dir);
+	interface_printok (true);
 	
 	// Check whether it exists and create it if it doesn't
 	struct stat buf;
@@ -124,7 +131,7 @@ void workspace_init () {
 }
 
 void workspace_cleanup () {
-	printf ("Cleaning up workspace...\n");
+	printf ("Cleaning up workspace...");
 	#ifdef WITH_SQLITE3
 		if (db != NULL) {
 			sqlite3_close (db);
@@ -134,6 +141,7 @@ void workspace_cleanup () {
 			fclose (file);
 		}
 	#endif
+	interface_printok (true);
 }
 
 char * workspace_getname () {

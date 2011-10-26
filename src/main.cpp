@@ -59,6 +59,7 @@ void printtrace () {
 
 void handler (int sig) {
 	#ifdef HAVE_SIGNAL_H
+		printf ("\n");
 		if (sig == 2) {
 			module_cleanup ();
 			workspace_cleanup ();
