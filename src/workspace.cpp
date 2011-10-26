@@ -123,6 +123,19 @@ void workspace_init () {
 	#endif
 }
 
+void workspace_cleanup () {
+	printf ("Cleaning up workspace...\n");
+	#ifdef WITH_SQLITE3
+		if (db != NULL) {
+			sqlite3_close (db);
+		}
+	#else
+		if (file != NULL) {
+			fclose (file);
+		}
+	#endif
+}
+
 char * workspace_getname () {
 	return workspace;
 }

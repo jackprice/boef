@@ -40,19 +40,62 @@ void printhelp () {
 	printf ("Help\n");
 }
 
+void printtrace () {
+	#ifdef HAVE_EXECINFO_H
+		printf ("\033[31mBacktrace:\n");
+		void * array [10];
+		size_t size;
+		char ** strings;
+		size_t i;
+		size = backtrace (array, 20);
+		strings = backtrace_symbols (array, size);
+		for (i = 0; i < size; i ++) {
+			printf ("    %s\n", strings [i]);
+		}
+		free (strings);
+		printf ("\033[0m\n");
+	#endif
+}
+
+void handler (int sig) {
+	#ifdef HAVE_SIGNAL_H
+		if (sig == 2) {
+			module_cleanup ();
+			workspace_cleanup ();
+			exit (0);
+		}
+		psignal (sig, "\nRecieved");
+		printtrace ();
+		module_cleanup ();
+		workspace_cleanup ();
+		exit (1);
+		return;
+	#endif
+}
+
 int main (int argc, char * argv []) {
-	printf ("\n8                     d'b \n"
-			"8                     8   \n"
-			"8oPYo. .oPYo. .oPYo. o8P  \n"
-			"8    8 8    8 8oooo8  8   \n"
-			"8    8 8    8 8.      8   \n"
-			"`YooP' `YooP' `Yooo'  8   \n\n"
-			"%s Copyright (C) 2011 Quetuo\n"
+	printf ("\n"
+			"\033[31m8     \033[0m \033[33m      \033[0m \033[32m      \033[0m \033[34m d'b\033[0m \n"
+			"\033[31m8     \033[0m \033[33m      \033[0m \033[32m      \033[0m \033[34m 8  \033[0m \n"
+			"\033[31m8oPYo.\033[0m \033[33m.oPYo.\033[0m \033[32m.oPYo.\033[0m \033[34mo8P \033[0m \n"
+			"\033[31m8    8\033[0m \033[33m8    8\033[0m \033[32m8oooo8\033[0m \033[34m 8  \033[0m \n"
+			"\033[31m8    8\033[0m \033[33m8    8\033[0m \033[32m8.    \033[0m \033[34m 8  \033[0m    \033[35mBy Quetuo\033[0m\n"
+			"\033[31m`YooP'\033[0m \033[33m`YooP'\033[0m \033[32m`Yooo'\033[0m \033[34m 8  \033[0m \n\n"
+			"\033[40m%s Copyright (C) 2011 Quetuo\033[0m\n"
 			"URL: %s\n\n"
-			"This program comes with ABSOLUTELY NO WARRANTY; for details type 'show w'.\n"
+			"\033[30mThis program comes with ABSOLUTELY NO WARRANTY; for details type 'show w'.\n"
 			"This is free software, and you are welcome to redistribute it under certain \n"
-			"conditions; type 'show c' for details\n\n",
+			"conditions; type 'show c' for details\033[0m\n\n",
 			PACKAGE_STRING, PACKAGE_URL);
+	
+	#ifdef HAVE_SIGNAL_H
+		signal (SIGINT, handler);
+		signal (SIGABRT, handler);
+		signal (SIGFPE, handler);
+		signal (SIGILL, handler);
+		signal (SIGTERM, handler);
+		signal (SIGSEGV, handler);
+	#endif
 	
 	workspace_init ();
 	workspace_choose ("default");
@@ -70,9 +113,9 @@ int main (int argc, char * argv []) {
 			explode_string (input, &args);
 		
 			if (args [0] == "quit") {
-				printf ("Cleaning up...\n");
-				module_cleanup ();
-				exit (0);
+				if (raise (2) != 0) {
+					abort ();
+				}
 			}
 			else if (args [0] == "load") {
 				if (args.size () < 3) {
@@ -154,6 +197,9 @@ int main (int argc, char * argv []) {
 				if (args.size () == 2) {
 					if (args [1] == "version") {
 						printf ("%s\n", PACKAGE_STRING);
+					}
+					else if (args [1] == "error") {
+						printf ("Last error: \"%s\" (0x%.2X)\n", strerror (errno), errno);
 					}
 					else {
 						module_printhelp (args [1]);

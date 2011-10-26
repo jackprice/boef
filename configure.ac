@@ -48,6 +48,12 @@ AC_CHECK_HEADERS([pwd.h])
 # Check for stat
 AC_CHECK_HEADERS([sys/stat.h])
 
+# Check for signal
+AC_CHECK_HEADERS([signal.h])
+
+# Check for backtrace
+AC_CHECK_HEADERS([execinfo.h])
+
 # Check for something else, I can't remember what though O_o
 
 # Check for cstd headers

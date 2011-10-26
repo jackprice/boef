@@ -51,6 +51,12 @@
 #ifdef HAVE_SYS_STAT_H
 	#include <sys/stat.h>
 #endif
+#ifdef HAVE_SIGNAL_H
+	#include <signal.h>
+#endif
+#ifdef HAVE_EXECINFO_H
+	#include <execinfo.h>
+#endif
 
 // SQLite3
 

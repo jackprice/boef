@@ -132,7 +132,7 @@ void debug_process::kill () {
 
 void debug_process::run () {
 	#ifdef linux
-		if (ptrace (PTRACE_CONTINUE, pid, 1, 0) == 0) {
+		if (ptrace (PTRACE_CONT, pid, 1, 0) == 0) {
 			
 		}
 		else {

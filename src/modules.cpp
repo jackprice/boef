@@ -102,6 +102,7 @@ module_func module_getfunction (std::string name) {
 */
 
 void module_cleanup () {
+	printf ("Cleaning up modules...\n");
 	map <string, void *> :: iterator it;
 	module_func func;
 	for (it = dl_handles.begin (); it != dl_handles.end (); it ++) {
