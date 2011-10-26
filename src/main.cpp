@@ -55,6 +55,9 @@ int main (int argc, char * argv []) {
 			PACKAGE_STRING, PACKAGE_URL);
 	
 	workspace_init ();
+	workspace_choose ("default");
+	
+	printf ("\n");
 	
 	char input [256];
 	vector <string> args;
@@ -117,6 +120,19 @@ int main (int argc, char * argv []) {
 					}
 					else {
 						printf ("Invalid arguments\n");
+					}
+				}
+				else {
+					printf ("Invalid arguments\n");
+				}
+			}
+			else if (args [0] == "workspace") {
+				if (args.size () == 1) {
+					printf ("Workspace %s selected\n", workspace_getname ());
+				}
+				else if (args.size () == 2) {
+					if (workspace_choose ((char *) args [1].c_str ()) == -1) {
+						printf ("Could not select workspace %s\n", args [1].c_str ());
 					}
 				}
 				else {
