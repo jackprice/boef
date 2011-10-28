@@ -39,23 +39,24 @@ char * module_geterror () {
  * on failure
 */
 int module_load (string name) {
+	printf ("Loading module %s...", name.c_str ());
 	const char * cname = ("modules/" + name + ".so.1.0").c_str ();
 	if (dl_handles.count (name) > 0) {
+		interface_printok (false);
 		return -1;
 	}
 	void * dl_handle = dlopen (cname, RTLD_LAZY);
 	if (!dl_handle) {
+		interface_printok (false);
 		return -1;
 	}
 	dl_handles [name] = dl_handle;
+	interface_printok (true);
 	module_func func = (module_func) dlsym (dl_handle, "module_init");
 	if (dlerror () == NULL) {
 		module_args * args = module_makeargs (1, name.c_str ());
 		func (args);
 		module_cleanargs (args);
-	}
-	else {
-		printf ("Failed to initialise: %s\n", dlerror ());
 	}
 	return 0;
 }
@@ -133,6 +134,13 @@ module_args * module_makeargs (int count, ...) {
 		*(ret -> argv + i) = arg;
 	}
 	return ret;
+}
+
+void module_pushargs (module_args * args, char * arg) {
+	args -> argc += 1;
+	args -> argv = (char **) realloc (args -> argv, args -> argc);
+	*(args -> argv + args -> argc - 1) = arg;
+	return;
 }
 
 void module_cleanargs (module_args * args) {

@@ -124,9 +124,7 @@ int main (int argc, char * argv []) {
 				}
 				else {
 					if (args [1] == "module") {
-						if (module_load (args [2]) == -1) {
-							printf ("Failed to load %s!\n", args [2].c_str ());
-						}
+						module_load (args [2]);
 					}
 				}
 			}
@@ -160,7 +158,7 @@ int main (int argc, char * argv []) {
 						string exec = "";
 						int i;
 						for (i = 2; i < args.size (); i ++) {
-							exec += args [i];
+							exec += args [i] + " ";
 						}
 						host_exec ((char *) exec.c_str ());
 					}
@@ -201,6 +199,11 @@ int main (int argc, char * argv []) {
 					}
 					else if (args [1] == "error") {
 						printf ("Last error: \"%s\" (0x%.2X)\n", strerror (errno), errno);
+					}
+					else if (args [1] == "credits") {
+						printf ("%s\n"
+								"By Quetuo (http://www.quetuo.net)\n",
+								PACKAGE_NAME);
 					}
 					else {
 						module_printhelp (args [1]);

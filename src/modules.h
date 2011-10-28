@@ -13,6 +13,7 @@ int module_load (std::string name);
 module_func module_getfunction (std::string name);
 void module_cleanup ();
 module_args * module_makeargs (int count, ...);
+void module_pushargs (module_args * args, char * arg);
 void module_cleanargs (module_args * args);
 void module_printhelp (std::string name);
 void module_listmodules ();

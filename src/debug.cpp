@@ -47,7 +47,7 @@ debug_process::debug_process () {
 	pipe (pfds);
 }
 
-debug_process::debug_process (char * _exec) {
+debug_process::debug_process (const char * _exec) {
 	pid = -1;
 	pipe (pfds);
 	pid = fork_exec (_exec);
@@ -62,24 +62,28 @@ debug_process::debug_process (pid_t _pid) {
 debug_process::~debug_process () {
 }
 
-pid_t debug_process::fork_exec (char * _exec) {
+pid_t debug_process::fork_exec (const char * _exec) {
 	int waitval;
-	switch (pid = fork ()) {
+	switch (pid = vfork ()) {
 		case -1:
 			return -1;
 			break;
 		case 0:
-			close (0);
+			setpgrp (); // Run in our own process group
+			/*close (0);
 			dup2 (0, pfds [0]);
 			close (pfds [1]);
-			debug_ptrace_traceme ();
-			execl (_exec, NULL, NULL);
+			debug_ptrace_traceme ();*/
+			execl ("/bin/sh", _exec, 0);
+			printf ("Failed to exec\n");
+			_exit (1);
 			break;
 		case 1:
-			close (pfds [0]);
+			//close (pfds [0]);
 			wait (&waitval);
 			break;
 	}
+	printf ("Waitval: %i\n", waitval);
 	exec = _exec;
 	return pid;
 }
