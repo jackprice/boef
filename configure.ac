@@ -26,7 +26,8 @@ AS_IF([test "x$enable_sqlite3" != "xno"], [
 AC_CHECK_HEADERS([stdio.h stdlib.h string.h errno.h stdint.h stdarg.h], , AC_MSG_ERROR[Required C stdlib header missing])
 
 # Check C POSIX Library
-AC_CHECK_HEADERS([unistd.h sys/types.h dirent.h sys/wait.h], , AC_MSG_ERROR[Required C POSIX header missing])
+AC_CHECK_HEADERS([unistd.h sys/types.h dirent.h sys/wait.h fcntl.h], , AC_MSG_ERROR[Required C POSIX header missing])
+AC_CHECK_FUNCS([posix_openpt])
 
 # Check for ptrace
 AC_CHECK_FUNCS([ptrace])

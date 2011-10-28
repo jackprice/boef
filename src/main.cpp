@@ -60,15 +60,21 @@ void printtrace () {
 void handler (int sig) {
 	#ifdef HAVE_SIGNAL_H
 		printf ("\n");
+		pid_t _pid = wait (NULL);
+		if (_pid != getpid ()) {
+			return;
+		}
 		if (sig == 2) {
 			module_cleanup ();
 			workspace_cleanup ();
+			host_cleanup ();
 			exit (0);
 		}
 		psignal (sig, "\nRecieved");
 		printtrace ();
 		module_cleanup ();
 		workspace_cleanup ();
+		host_cleanup ();
 		exit (1);
 		return;
 	#endif
@@ -98,6 +104,7 @@ int main (int argc, char * argv []) {
 		signal (SIGSEGV, handler);
 	#endif
 	
+	host_init ();
 	workspace_init ();
 	workspace_choose ("default");
 	

@@ -24,56 +24,118 @@
 
 #include "include.h"
 
-debug_process * debug = NULL;
+int masterfd = -1;
+char * slavedevice = NULL;
+int slavefd = -1;
+pid_t childpid = -1;
+
+#ifndef HAVE_POSIX_OPENPT
+	int posix_openpt (int flags) {
+		return open ("/dev/ptmax", flags);
+	}
+#endif
+
+void host_childsig (int sig) {
+	wait (NULL);
+	printf ("Host disconnected because child exited\n");
+	childpid = -1;
+}
+
+int host_init () {
+	printf ("Initalising host (%s)...\n", ttyname (0));
+	signal (SIGCHLD, host_childsig);
+	return 0;
+}
+
+int host_init_pts () {
+	printf ("Creating slave pts for %s...\n", ttyname (0));
+	if (slavefd > -1) {
+		close (slavefd);
+		slavefd = -1;
+	}
+	if (masterfd > -1) {
+		close (masterfd);
+		masterfd = -1;
+	}
+	masterfd = posix_openpt (O_RDWR | O_NOCTTY);
+	if (masterfd == -1 || 
+		grantpt (masterfd) == -1 || 
+		unlockpt (masterfd) == -1 ||
+		(slavedevice = ptsname (masterfd)) == NULL) {
+		printf ("Failed to open pty: %s\n", strerror (errno));
+		exit (1);
+	}
+	printf ("Opened %s\n", slavedevice);
+	slavefd = open (ptsname (masterfd), O_RDWR);
+}
+
+void host_cleanup () {
+	printf ("Cleaning up host...");
+	if (masterfd != -1) {
+		close (masterfd);
+		masterfd = -1;
+	}
+	if (slavefd != -1) {
+		close (slavefd);
+		slavefd = -1;
+	}
+	interface_printok (true);
+	return;
+}
 
 void host_attach (pid_t pid) {
-	if (debug != NULL) {
-		printf ("Host is currently attached, use 'host kill' or 'host detach' to free\n");
-		return;
-	}
-	debug = new debug_process (pid);
-	if (debug -> getpid () < 0) {
-		printf ("Failed to attach: 0x%.2X\n", errno);
-		delete debug;
-		debug = NULL;
-		return;
-	}
 	return;
 }
 
 void host_exec (char * exec) {
-	if (debug != NULL) {
-		printf ("Host is currently attached, use 'host kill' or 'host detach' to free\n");
+	if (childpid > -1) {
+		printf ("Host currently attached - use host kill or host detach\n");
 		return;
 	}
-	printf ("Executing \"%s\"\n", exec);
-	debug = new debug_process (exec);
+	printf ("Executing %s...\n", exec);
+	char ** cargs = (char **) malloc (4);
+	*(cargs) = "/bin/sh";
+	*(cargs + 1) = "-c";
+	*(cargs + 2) = exec;
+	*(cargs + 3) = NULL;
+	
+	host_init_pts ();
+	
+	switch (childpid = fork ()) {
+		case -1:
+			printf ("Failed to fork\n");
+			return;
+		case 0:
+			// Child
+			close (masterfd);
+			close (0);
+			close (1);
+			close (2);
+			dup (slavefd);
+			dup (slavefd);
+			dup (slavefd);
+			execv ("/bin/sh", cargs);
+			printf ("Failed to execute\n");
+			return;
+			break;
+		case 1:
+			// Parent
+			close (slavefd);
+			wait (NULL);
+			printf ("Child started with PID %i\n", childpid);
+			break;
+	}
 	return;
 }
 
 void host_kill () {
-	if (debug == NULL) {
-		printf ("Host not currently attached\n");
-		return;
-	}
-	debug -> kill ();
-	if (debug -> getpid () == 0) {
-		delete debug;
-		debug = NULL;
-	}
+	return;
 }
 
 void host_run () {
-	if (debug == NULL) {
-		printf ("Host not currently attached\n");
-		return;
-	}
-	debug -> run ();
+	return;
 }
 
 void host_printinfo () {
-	if (debug == NULL) {
-		printf ("Host not currently attached\n");
-	}
 	return;
 }

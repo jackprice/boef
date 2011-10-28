@@ -16,6 +16,7 @@
 #include <sys/types.h>
 #include <dirent.h>
 #include <sys/wait.h>
+#include <fcntl.h>
 
 // C++ Standard Library
 #include <iostream>
@@ -67,6 +68,6 @@
 #include "main.h"
 #include "modules.h"
 #include "host.h"
-#include "debug.h"
 #include "workspace.h"
 #include "interface.h"
+#include "fuzz.h"
