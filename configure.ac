@@ -7,7 +7,7 @@ AC_CONFIG_FILES([
  Makefile
  src/Makefile
 ])
-AC_CONFIG_SUBDIRS([modules])
+#AC_CONFIG_SUBDIRS([modules])
 
 ## CHECK FEATURES ##
 
@@ -56,6 +56,10 @@ AC_CHECK_HEADERS([signal.h])
 AC_CHECK_FUNCS([backtrace])
 AC_CHECK_HEADERS([execinfo.h])
 AC_CHECK_LIB([execinfo], [backtrace], , , ) # On BSD at least, libexecinfo is needed
+
+# Check for binutils
+AC_CHECK_HEADERS([bfd.h])
+AC_CHECK_LIB([bfd], [bfd_openr], , , )
 
 # Check for something else, I can't remember what though O_o
 

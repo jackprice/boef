@@ -34,8 +34,8 @@ int ptraceing = -1;
 #ifdef BSD
 	struct reg regs;
 #endif
-#ifdef linux
-	//struct user_regs_struct regs;
+#ifdef __linux__
+	struct user_regs_struct regs;
 #endif
 
 #ifndef HAVE_POSIX_OPENPT
@@ -46,6 +46,7 @@ int ptraceing = -1;
 
 void host_childsig (int sig, siginfo_t * info, void * ptr) {
 	if (info -> si_pid == childpid) {
+		printf ("\n");
 		if (info -> si_code == CLD_EXITED) {
 			printf ("Child exited with status %i\n", info -> si_status);
 			childpid = -1;
@@ -139,6 +140,11 @@ void host_exec (char * exec) {
 	}
 	*(cargs + i + 1) = NULL;
 	
+	if (debug_open (cargs [0]) == -1) {
+		printf ("Could not debug %s\n", cargs [0]);
+		free (cargs);
+		return;
+	}
 	host_init_pts ();
 	
 	switch (childpid = fork ()) {
@@ -178,6 +184,7 @@ void host_exec (char * exec) {
 			printf ("Child started with PID %i\n", childpid);
 			host_run ();
 			sleep (1);
+			free (cargs);
 			break;
 	}
 	return;

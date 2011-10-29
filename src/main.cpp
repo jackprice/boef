@@ -65,6 +65,7 @@ void handler (int sig, siginfo_t * info, void * ptr) {
 			module_cleanup ();
 			//workspace_cleanup (); // Damn it, why won't you stop segfaulting on me!
 			host_cleanup ();
+			debug_cleanup ();
 			exit (0);
 		}
 	#endif
@@ -80,7 +81,7 @@ int main (int argc, char * argv []) {
 			"\033[31m`YooP'\033[0m \033[33m`YooP'\033[0m \033[32m`Yooo'\033[0m \033[34m 8  \033[0m \n\n"
 			"\033[40m%s Copyright (C) 2011 Quetuo\033[0m\n"
 			"URL: %s\n\n"
-			"\033[30mThis program comes with ABSOLUTELY NO WARRANTY; for details type 'show w'.\n"
+			"\033[0mThis program comes with ABSOLUTELY NO WARRANTY; for details type 'show w'.\n"
 			"This is free software, and you are welcome to redistribute it under certain \n"
 			"conditions; type 'show c' for details\033[0m\n\n",
 			PACKAGE_STRING, PACKAGE_URL);
@@ -108,6 +109,7 @@ int main (int argc, char * argv []) {
 	host_init ();
 	workspace_init ();
 	workspace_choose ("default");
+	debug_init ();
 	
 	printf ("\n");
 	

@@ -58,6 +58,9 @@
 #ifdef HAVE_EXECINFO_H
 	#include <execinfo.h>
 #endif
+#ifdef HAVE_BFD_H
+	#include <bfd.h>
+#endif
 
 // SQLite3
 

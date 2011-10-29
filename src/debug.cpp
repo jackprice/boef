@@ -24,6 +24,11 @@
 
 #include "include.h"
 
+bfd * bfdf = NULL;
+char * target = NULL;
+std::map <std::string, asymbol> symbols;
+std::map <std::string, bfd_section> sections;
+
 int debug_ptrace_traceme () {
 	#ifdef __linux__
 		return (int) ptrace (PTRACE_TRACEME, 0, 0, 0);
@@ -42,115 +47,99 @@ int debug_ptrace_getregs (pid_t pid, void * data) {
 	#endif
 }
 
-/*debug_process::debug_process () {
-	pid = -1;
-	pipe (pfds);
+void debug_init () {
+	bfd_init ();
+	target = getenv ("GNUTARGET");
+	printf ("Initialising debugging\n");
 }
 
-debug_process::debug_process (const char * _exec) {
-	pid = -1;
-	pipe (pfds);
-	pid = fork_exec (_exec);
-}
-
-debug_process::debug_process (pid_t _pid) {
-	pid = -1;
-	pipe (pfds);
-	pid = attach_pid (_pid);
-}
-
-debug_process::~debug_process () {
-}
-
-pid_t debug_process::fork_exec (const char * _exec) {
-	int waitval;
-	switch (pid = vfork ()) {
-		case -1:
-			return -1;
-			break;
-		case 0:
-			setpgrp (); // Run in our own process group
-			close (0);
-			dup2 (0, pfds [0]);
-			close (pfds [1]);
-			debug_ptrace_traceme ();
-			execl ("/bin/sh", _exec, 0);
-			printf ("Failed to exec\n");
-			_exit (1);
-			break;
-		case 1:
-			//close (pfds [0]);
-			wait (&waitval);
-			break;
+void debug_cleanup () {
+	printf ("Cleaning up debugging...");
+	if (bfdf != NULL) {
+		bfd_close (bfdf);
+		bfdf = NULL;
 	}
-	printf ("Waitval: %i\n", waitval);
-	exec = _exec;
-	return pid;
+	interface_printok (true);
 }
 
-pid_t debug_process::attach_pid (pid_t _pid) {
-	printf ("Attaching to process %i...\n", _pid);
-	#ifdef linux
-		if (ptrace (PTRACE_ATTACH, _pid, 0, 0) == -1) {
-			return -1;
-		}
-		pid = _pid;
-		return pid;
-	#endif
-	#ifdef BSD
-		if (ptrace (PT_ATTACH, _pid, 0, 0) == -1) {
-			return -1;
-		}
-		pid = _pid;
-		return pid;
-	#endif
+void debug_loadsections () {
+	if (bfdf == NULL) {
+		return;
+	}
+	sections.clear ();
+	bfd_section * p;
+	for (p = bfdf -> sections; p != NULL; p = p -> next) {
+		sections [p -> name] = *p;
+	}
 }
 
-pid_t debug_process::getpid () {
-	return pid;
+void debug_printsections () {
+	if (bfdf == NULL) {
+		return;
+	}
+	if (sections.size () == 0) {
+		debug_loadsections ();
+	}
+	if (sections.size () == 0) {
+		return;
+	}
+	printf ("Sections: (%i)\n", sections.size ());
+	
 }
 
-void debug_process::kill () {
-	printf ("Killing process %i...\n", pid);
-	#ifdef linux
-		if (ptrace (PTRACE_KILL, pid, 0, 0) == 0) {
-			pid = 0;
-			exec = NULL;
-		}
-		else {
-			printf ("Could not kill: %.2X\n", errno);
-		}
+void debug_loadsymbols () {
+	if (bfdf == NULL) {
 		return;
-	#endif
-	#ifdef BSD
-		if (ptrace (PT_KILL, pid, 0, 0) == 0) {
-			pid = 0;
-			exec = NULL;
-		}
-		else {
-			printf ("Could not kill: %.2X\n", errno);
-		}
+	}
+	symbols.clear ();
+	long storage_needed;
+	asymbol ** symbol_table;
+	long lsymbols;
+	long i;
+	storage_needed = bfd_get_symtab_upper_bound (bfdf);
+	if (storage_needed <= 0) {
 		return;
-	#endif
+	}
+	symbol_table = (asymbol **) malloc (storage_needed);
+	if (symbol_table == NULL) {
+		return;
+	}
+	lsymbols = bfd_canonicalize_symtab (bfdf, symbol_table);
+	if (lsymbols < 0) {
+		return;
+	}
+	for (i = 0; i < lsymbols; i ++) {
+		//printf ("%02.2i: %08.8p\t %s \n", i, symbol_table [i] -> value, symbol_table [i] -> name);
+		symbols [symbol_table [i] -> name] = *(symbol_table [i]);
+	}
+	free (symbol_table);
 }
 
-void debug_process::run () {
-	#ifdef linux
-		if (ptrace (PTRACE_CONT, pid, 1, 0) == 0) {
-			
-		}
-		else {
-			printf ("Could not run: %.2X\n", errno);
-		}
+void debug_printsymbols () {
+	if (bfdf == NULL) {
 		return;
-	#endif
-	#ifdef BSD
-		if (ptrace (PT_CONTINUE, pid, (caddr_t) 1, 0) == 0) {
-			
-		}
-		else {
-			printf ("Could not run: %.2X\n", errno);
-		}
+	}
+	if (symbols.size () == 0) {
+		debug_loadsymbols ();
+	}
+	if (symbols.size () == 0) {
 		return;
-	#endif
-}*/
+	}
+	printf ("Symbols: (%i)\n", symbols.size ());
+}
+
+int debug_open (char * fn) {
+	if (bfdf != NULL) {
+		return -1;
+	}
+	if ((bfdf = bfd_openr (fn, target)) == NULL) {
+		return -1;
+	}
+	if (!bfd_check_format (bfdf, bfd_object)) {
+		bfd_perror (NULL);
+		return -1;
+	}
+	debug_printsections ();
+	debug_printsymbols ();
+	return 0;
+}
