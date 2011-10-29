@@ -30,7 +30,7 @@ char * workspace = "default";
 int workspace_id = 0;
 
 #ifdef WITH_SQLITE3
-	sqlite3 * db;
+	sqlite3 * db = NULL;
 	char * workspace_db = NULL;
 #else
 	FILE * file = NULL;
@@ -135,10 +135,12 @@ void workspace_cleanup () {
 	#ifdef WITH_SQLITE3
 		if (db != NULL) {
 			sqlite3_close (db);
+			db = NULL;
 		}
 	#else
 		if (file != NULL) {
 			fclose (file);
+			file = NULL;
 		}
 	#endif
 	interface_printok (true);

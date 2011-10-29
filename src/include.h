@@ -71,3 +71,4 @@
 #include "workspace.h"
 #include "interface.h"
 #include "fuzz.h"
+#include "debug.h"

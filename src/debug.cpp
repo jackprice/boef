@@ -42,7 +42,7 @@ int debug_ptrace_getregs (pid_t pid, void * data) {
 	#endif
 }
 
-debug_process::debug_process () {
+/*debug_process::debug_process () {
 	pid = -1;
 	pipe (pfds);
 }
@@ -70,10 +70,10 @@ pid_t debug_process::fork_exec (const char * _exec) {
 			break;
 		case 0:
 			setpgrp (); // Run in our own process group
-			/*close (0);
+			close (0);
 			dup2 (0, pfds [0]);
 			close (pfds [1]);
-			debug_ptrace_traceme ();*/
+			debug_ptrace_traceme ();
 			execl ("/bin/sh", _exec, 0);
 			printf ("Failed to exec\n");
 			_exit (1);
@@ -153,4 +153,4 @@ void debug_process::run () {
 		}
 		return;
 	#endif
-}
+}*/

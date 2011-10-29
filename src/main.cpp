@@ -57,26 +57,16 @@ void printtrace () {
 	#endif
 }
 
-void handler (int sig) {
+void handler (int sig, siginfo_t * info, void * ptr) {
 	#ifdef HAVE_SIGNAL_H
-		printf ("\n");
-		pid_t _pid = wait (NULL);
-		if (_pid != getpid ()) {
-			return;
-		}
-		if (sig == 2) {
+		printf ("SIG %i\n", sig);
+		if (sig == SIGINT || sig == SIGQUIT) {
+			printf ("\n");
 			module_cleanup ();
-			workspace_cleanup ();
+			//workspace_cleanup (); // Damn it, why won't you stop segfaulting on me!
 			host_cleanup ();
 			exit (0);
 		}
-		psignal (sig, "\nRecieved");
-		printtrace ();
-		module_cleanup ();
-		workspace_cleanup ();
-		host_cleanup ();
-		exit (1);
-		return;
 	#endif
 }
 
@@ -96,12 +86,23 @@ int main (int argc, char * argv []) {
 			PACKAGE_STRING, PACKAGE_URL);
 	
 	#ifdef HAVE_SIGNAL_H
-		signal (SIGINT, handler);
-		signal (SIGABRT, handler);
-		signal (SIGFPE, handler);
-		signal (SIGILL, handler);
-		signal (SIGTERM, handler);
-		signal (SIGSEGV, handler);
+		struct sigaction act;
+		memset (&act, 0, sizeof (act));
+		act.sa_sigaction = handler;
+		act.sa_flags = SA_SIGINFO;
+		sigaction (SIGINT, &act, NULL);
+		sigaction (SIGABRT, &act, NULL);
+		sigaction (SIGFPE, &act, NULL);
+		sigaction (SIGILL, &act, NULL);
+		sigaction (SIGTERM, &act, NULL);
+		sigaction (SIGSEGV, &act, NULL);
+		/*signal (SIGINT, handler);
+		signal (SIGQUIT, handler);
+		//signal (SIGABRT, handler);
+		//signal (SIGFPE, handler);
+		//signal (SIGILL, handler);
+		//signal (SIGTERM, handler);
+		//signal (SIGSEGV, handler);*/
 	#endif
 	
 	host_init ();
@@ -114,7 +115,9 @@ int main (int argc, char * argv []) {
 	vector <string> args;
 	while (running) {
 		args.clear ();
+		bzero (input, 256);
 		printf ("boef > ");
+		bzero (input, 256);
 		fgets (input, 256, stdin);
 		if (strlen (input) > 0) {
 			input [strlen (input) - 1] = 0;
@@ -156,6 +159,9 @@ int main (int argc, char * argv []) {
 					else if (args [1] == "run") {
 						host_run ();
 					}
+					else if (args [1] == "read") {
+						host_readline ();
+					}
 					else {
 						printf ("Invalid arguments\n");
 					}
@@ -193,6 +199,22 @@ int main (int argc, char * argv []) {
 				else if (args.size () == 2) {
 					if (workspace_choose ((char *) args [1].c_str ()) == -1) {
 						printf ("Could not select workspace %s\n", args [1].c_str ());
+					}
+				}
+				else {
+					printf ("Invalid arguments\n");
+				}
+			}
+			else if (args [0] == "fuzz") {
+				if (args.size () == 3) {
+					if (args [1] == "send") {
+						int len = atoi (args [2].c_str ());
+						if (len > 0) {
+							host_write (fuzz_makestring (len, 'A'), len);
+						}
+						else {
+							printf ("Invalid arguments\n");
+						}
 					}
 				}
 				else {
