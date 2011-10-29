@@ -5,6 +5,12 @@
 	int posix_openpt (int flags);
 #endif
 
+#ifndef PTRACE_GETREGS
+	#ifdef PT_GETREGS
+		#define PTRACE_GETREGS PT_GETREGS
+	#endif
+#endif
+
 int host_init ();
 void host_cleanup ();
 void host_exec (char * exec);

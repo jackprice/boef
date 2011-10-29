@@ -53,7 +53,9 @@ AC_CHECK_HEADERS([sys/stat.h])
 AC_CHECK_HEADERS([signal.h])
 
 # Check for backtrace
+AC_CHECK_FUNCS([backtrace])
 AC_CHECK_HEADERS([execinfo.h])
+AC_CHECK_LIB([execinfo], [backtrace], , , ) # On BSD at least, libexecinfo is needed
 
 # Check for something else, I can't remember what though O_o
 

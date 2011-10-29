@@ -31,7 +31,12 @@ char * slavedevice = NULL;
 int slavefd = -1;
 pid_t childpid = -1;
 int ptraceing = -1;
-struct user_regs_struct regs;
+#ifdef BSD
+	struct reg regs;
+#endif
+#ifdef linux
+	//struct user_regs_struct regs;
+#endif
 
 #ifndef HAVE_POSIX_OPENPT
 	int posix_openpt (int flags) {
@@ -142,10 +147,18 @@ void host_exec (char * exec) {
 			return;
 		case 0:
 			// Child
-			if (setpgrp() == -1) {
-				printf ("Failed to detatch\n");
-				exit (1);
-			}
+			#ifdef __linux__
+				if (setpgrp() == -1) {
+					printf ("Failed to detatch\n");
+					exit (1);
+				}
+			#endif
+			#ifdef BSD
+				if (setpgrp(getpid (), getpid ()) == -1) {
+					printf ("Failed to detatch\n");
+					exit (1);
+				}
+			#endif
 			close (masterfd);
 			close (0);
 			close (1);
@@ -230,7 +243,7 @@ int host_read (void * buffer, size_t len) {
 }
 
 void host_getregs () {
-	if (ptrace (PTRACE_GETREGS, childpid, 0, &regs) == -1) {
+	if (ptrace (PTRACE_GETREGS, childpid, 0, (int) &regs) == -1) {
 		printf ("Failed to get registers\n");
 		return;
 	}
@@ -238,7 +251,14 @@ void host_getregs () {
 
 void host_dumpregs () {
 	host_getregs ();
-	printf ("EAX %.8lX\tEBX %.8lX\tECX %.8lX\tEDX %.8lX\n", regs.eax, regs.ebx, regs.ecx, regs.edx);
-    printf ("ESP %.8lX\tEBP %.8lX\tESI %.8lX\tEDI %.8lX\n", regs.esp, regs.ebp, regs.esi, regs.edi);
-    printf ("EIP %.8lX\n", regs.eip);
+	#ifdef linux
+		printf ("EAX %.8lX\tEBX %.8lX\tECX %.8lX\tEDX %.8lX\n", regs.eax, regs.ebx, regs.ecx, regs.edx);
+		printf ("ESP %.8lX\tEBP %.8lX\tESI %.8lX\tEDI %.8lX\n", regs.esp, regs.ebp, regs.esi, regs.edi);
+		printf ("EIP %.8lX\n", regs.eip);
+	#endif
+	#ifdef BSD
+		printf ("EAX %.8lX\tEBX %.8lX\tECX %.8lX\tEDX %.8lX\n", regs.r_eax, regs.r_ebx, regs.r_ecx, regs.r_edx);
+		printf ("ESP %.8lX\tEBP %.8lX\tESI %.8lX\tEDI %.8lX\n", regs.r_esp, regs.r_ebp, regs.r_esi, regs.r_edi);
+		printf ("EIP %.8lX\n", regs.r_eip);
+	#endif
 }
