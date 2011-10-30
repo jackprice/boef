@@ -61,6 +61,14 @@ AC_CHECK_LIB([execinfo], [backtrace], , , ) # On BSD at least, libexecinfo is ne
 AC_CHECK_HEADERS([bfd.h])
 AC_CHECK_LIB([bfd], [bfd_openr], , , )
 
+# Check for libiberty
+AC_CHECK_HEADERS([libiberty.h])
+AC_CHECK_LIB([iberty], [xmalloc], , , )
+
+# Check for libopcodes
+AC_CHECK_HEADERS([dis-asm.h])
+AC_CHECK_LIB([opcodes], [buffer_read_memory], , , )
+
 # Check for something else, I can't remember what though O_o
 
 # Check for cstd headers

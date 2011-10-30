@@ -61,6 +61,12 @@
 #ifdef HAVE_BFD_H
 	#include <bfd.h>
 #endif
+#ifdef HAVE_LIBIBERTY_H
+	//#include <libiberty.h>
+#endif
+#ifdef HAVE_DIS_ASM_H
+	#include <dis-asm.h>
+#endif
 
 // SQLite3
 
