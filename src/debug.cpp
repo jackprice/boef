@@ -24,10 +24,12 @@
 
 #include "include.h"
 
-bfd * bfdf = NULL;
-char * target = NULL;
-std::map <std::string, asymbol> symbols;
-std::map <std::string, bfd_section> sections;
+#ifdef HAVE_LIBBFD
+	bfd * bfdf = NULL;
+	char * target = NULL;
+	std::map <std::string, asymbol> symbols;
+	std::map <std::string, bfd_section> sections;
+#endif
 std::vector <std::string> vulnfunctions;
 
 int debug_ptrace_traceme () {
@@ -96,10 +98,12 @@ void debug_printsections () {
 		return;
 	}
 	printf ("Sections: (%i)\n", sections.size ());
-	std::map <std::string, bfd_section> :: iterator it;
-	for (it = sections.begin (); it != sections.end (); it ++) {
-		printf ("\t%s\n", (*it).first.c_str ());
-	}
+	#ifdef HAVE_LIBBFD
+		std::map <std::string, bfd_section> :: iterator it;
+		for (it = sections.begin (); it != sections.end (); it ++) {
+			printf ("\t%s\n", (*it).first.c_str ());
+		}
+	#endif
 }
 
 void debug_loadsymbols () {
@@ -143,10 +147,12 @@ void debug_printsymbols () {
 		return;
 	}
 	printf ("Symbols: (%i)\n", symbols.size ());
-	std::map <std::string, asymbol> :: iterator it;
-	for (it = symbols.begin (); it != symbols.end (); it ++) {
-		printf ("\t%s\n", (*it).first.c_str ());
-	}
+	#ifdef HAVE_LIBBFD
+		std::map <std::string, asymbol> :: iterator it;
+		for (it = symbols.begin (); it != symbols.end (); it ++) {
+			printf ("\t%s\n", (*it).first.c_str ());
+		}
+	#endif
 }
 
 void debug_printstack () {
