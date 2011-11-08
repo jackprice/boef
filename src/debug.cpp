@@ -49,7 +49,9 @@ int debug_ptrace_getregs (pid_t pid, void * data) {
 }
 
 void debug_init () {
-	bfd_init ();
+	#ifdef HAVE_LIBBFD
+		bfd_init ();
+	#endif
 	target = getenv ("GNUTARGET");
 	printf ("Initialising debugging...\n");
 	vulnfunctions.push_back ("gets");
@@ -62,8 +64,10 @@ void debug_init () {
 void debug_cleanup () {
 	printf ("Cleaning up debugging...");
 	if (bfdf != NULL) {
-		bfd_close (bfdf);
-		bfdf = NULL;
+		#ifdef HAVE_LIBBFD
+			bfd_close (bfdf);
+			bfdf = NULL;
+		#endif
 	}
 	interface_printok (true);
 }
@@ -73,10 +77,12 @@ void debug_loadsections () {
 		return;
 	}
 	sections.clear ();
-	bfd_section * p;
-	for (p = bfdf -> sections; p != NULL; p = p -> next) {
-		sections [p -> name] = *p;
-	}
+	#ifdef HAVE_LIBBFD
+		bfd_section * p;
+		for (p = bfdf -> sections; p != NULL; p = p -> next) {
+			sections [p -> name] = *p;
+		}
+	#endif
 }
 
 void debug_printsections () {
@@ -101,27 +107,29 @@ void debug_loadsymbols () {
 		return;
 	}
 	symbols.clear ();
-	long storage_needed;
-	asymbol ** symbol_table;
-	long lsymbols;
-	long i;
-	storage_needed = bfd_get_symtab_upper_bound (bfdf);
-	if (storage_needed <= 0) {
-		return;
-	}
-	symbol_table = (asymbol **) malloc (storage_needed);
-	if (symbol_table == NULL) {
-		return;
-	}
-	lsymbols = bfd_canonicalize_symtab (bfdf, symbol_table);
-	if (lsymbols < 0) {
-		return;
-	}
-	for (i = 0; i < lsymbols; i ++) {
-		//printf ("%02.2i: %08.8p\t %s \n", i, symbol_table [i] -> value, symbol_table [i] -> name);
-		symbols [symbol_table [i] -> name] = *(symbol_table [i]);
-	}
-	free (symbol_table);
+	#ifdef HAVE_LIBBFD
+		long storage_needed;
+		asymbol ** symbol_table;
+		long lsymbols;
+		long i;
+		storage_needed = bfd_get_symtab_upper_bound (bfdf);
+		if (storage_needed <= 0) {
+			return;
+		}
+		symbol_table = (asymbol **) malloc (storage_needed);
+		if (symbol_table == NULL) {
+			return;
+		}
+		lsymbols = bfd_canonicalize_symtab (bfdf, symbol_table);
+		if (lsymbols < 0) {
+			return;
+		}
+		for (i = 0; i < lsymbols; i ++) {
+			//printf ("%02.2i: %08.8p\t %s \n", i, symbol_table [i] -> value, symbol_table [i] -> name);
+			symbols [symbol_table [i] -> name] = *(symbol_table [i]);
+		}
+		free (symbol_table);
+	#endif
 }
 
 void debug_printsymbols () {
@@ -148,13 +156,15 @@ int debug_open (char * fn) {
 	if (bfdf != NULL) {
 		return -1;
 	}
-	if ((bfdf = bfd_openr (fn, target)) == NULL) {
-		return -1;
-	}
-	if (!bfd_check_format (bfdf, bfd_object)) {
-		bfd_perror (NULL);
-		return -1;
-	}
+	#ifdef HAVE_LIBBFD
+		if ((bfdf = bfd_openr (fn, target)) == NULL) {
+			return -1;
+		}
+		if (!bfd_check_format (bfdf, bfd_object)) {
+			bfd_perror (NULL);
+			return -1;
+		}
+	#endif
 	debug_printsections ();
 	debug_printsymbols ();
 	return 0;
