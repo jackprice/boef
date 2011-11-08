@@ -23,11 +23,11 @@
 /******************************************************************************/
 
 #include <gtk/gtk.h>
+#include <gdk-pixbuf/gdk-pixbuf.h>
+#include "include.h"
 #ifdef WITH_VTE
 	#include <vte/vte.h>
 #endif
-#include <gdk-pixbuf/gdk-pixbuf.h>
-#include "include.h"
 
 char * authors [] = {"Quetuo <quetuo@quetuo.net>", NULL};
 
@@ -78,6 +78,13 @@ static void destroy (GtkWidget * widget, GdkEvent * event) {
 	}
 }
 
+static gboolean windownotepad_focus (GtkNotebook * notebook, gpointer arg1, guint arg2, gpointer data) {
+	if (arg2 == 1) {
+		gtk_label_set_text (GTK_LABEL (windowvpanednotebooklabel2), (const gchar *) "Log");
+	}
+	return false;
+}
+
 void interface_set_status (char * status) {
 	gtk_statusbar_pop (GTK_STATUSBAR (windowstatus), gtk_statusbar_get_context_id (GTK_STATUSBAR (windowstatus), "status"));
 	gtk_statusbar_push (GTK_STATUSBAR (windowstatus), gtk_statusbar_get_context_id (GTK_STATUSBAR (windowstatus), "status"), status);
@@ -89,11 +96,17 @@ void interface_log (char * err) {
 }
 
 void interface_log_warn (char * err) {
+	if (gtk_notebook_get_current_page (GTK_NOTEBOOK (windowvpanednotebook)) != 1) {
+		gtk_label_set_markup (GTK_LABEL (windowvpanednotebooklabel2), (const gchar *) "<span foreground=\"orange\">Log</span>");
+	}
 	gtk_text_buffer_insert_with_tags_by_name (GTK_TEXT_BUFFER (windowtextbuffer), &windowtextiter, (const gchar *) err, -1, (const gchar *) "orangefg", NULL);
 	return;
 }
 
 void interface_log_error (char * err) {
+	if (gtk_notebook_get_current_page (GTK_NOTEBOOK (windowvpanednotebook)) != 1) {
+		gtk_label_set_markup (GTK_LABEL (windowvpanednotebooklabel2), (const gchar *) "<span foreground=\"red\">Log</span>");
+	}
 	gtk_text_buffer_insert_with_tags_by_name (GTK_TEXT_BUFFER (windowtextbuffer), &windowtextiter, (const gchar *) err, -1, (const gchar *) "redfg", NULL);
 	return;
 }
@@ -160,6 +173,7 @@ void interface_init (int argc, char * argv []) {
 	windowvpanednotebook = gtk_notebook_new ();
 	gtk_paned_add2 (GTK_PANED (windowvpaned), windowvpanednotebook);
 	gtk_widget_show (windowvpanednotebook);
+	g_signal_connect (windowvpanednotebook, "switch-page", G_CALLBACK (windownotepad_focus), NULL);
 	
 	#ifdef WITH_VTE
 		windowvpanednotebookvte = vte_terminal_new ();
@@ -199,6 +213,7 @@ void interface_init (int argc, char * argv []) {
 	gtk_about_dialog_set_logo (GTK_ABOUT_DIALOG (aboutwindow), gtk_image_get_pixbuf (GTK_IMAGE (gtk_image_new_from_file ("boef.png"))));
 	
 	interface_log ("GUI started\n");
+	interface_log_error ("Erm\n");
 }
 
 void interface_loop () {
