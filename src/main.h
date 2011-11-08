@@ -5,6 +5,7 @@
 #define SIGQUIT 3
 #define SIGCHLD 17
 
+void * input_loop (void * ptr);
 void explode_string (std::string str, std::vector <std::string> * results);
 
 #endif

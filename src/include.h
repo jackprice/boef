@@ -17,6 +17,7 @@
 #include <dirent.h>
 #include <sys/wait.h>
 #include <fcntl.h>
+#include <pthread.h>
 
 // C++ Standard Library
 #include <iostream>
@@ -74,6 +75,8 @@
 	#include <sqlite3.h>
 #endif
 
+#define COPYRIGHT "Copyright (C) 2011 Quetuo"
+
 #include "main.h"
 #include "modules.h"
 #include "host.h"
@@ -81,3 +84,5 @@
 #include "interface.h"
 #include "fuzz.h"
 #include "debug.h"
+#include "process.h"
+#include "strings.h"

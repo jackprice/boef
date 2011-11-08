@@ -1,6 +1,15 @@
 #ifndef __INTERFACE_H__
 #define __INTERFACE_H__
 
+#ifdef WITH_GTK
+
+#endif
+
+void interface_set_status (char * status);
+void interface_message (char * err);
+void interface_error (char * err);
+void interface_init (int argc, char * argv []);
+void interface_loop ();
 void interface_printok (bool ok);
 
 #endif

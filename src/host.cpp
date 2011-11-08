@@ -31,6 +31,8 @@ char * slavedevice = NULL;
 int slavefd = -1;
 pid_t childpid = -1;
 int ptraceing = -1;
+int childrunning = 0;
+s_process proc;
 #ifdef BSD
 	struct reg regs;
 #endif
@@ -46,20 +48,25 @@ int ptraceing = -1;
 
 void host_childsig (int sig, siginfo_t * info, void * ptr) {
 	if (info -> si_pid == childpid) {
-		printf ("\n");
 		if (info -> si_code == CLD_EXITED) {
 			printf ("Child exited with status %i\n", info -> si_status);
 			childpid = -1;
 			return;
 		}
+		if (info -> si_code == CLD_TRAPPED) {
+			childrunning = 1;
+			return;
+		}
+		
 		if (info -> si_status == 5) {
-			printf ("Debugger attached\n");
+			//printf ("Debugger attached\n");
 			ptraceing = 0;
 			return;
 		}
+		printf ("\n");
 		host_dumpregs ();
-		psignal (info -> si_status, "\nSignal");
-		printf ("Signal: %i\n", info -> si_status);
+		psignal (info -> si_status, "\nChild Signal");
+		printf ("Child Signal: %i\n", info -> si_status);
 	}
 	/*pid_t _pid = wait (NULL);
 	if (_pid == childpid) {
@@ -177,12 +184,13 @@ void host_exec (char * exec) {
 			printf ("Failed to execute\n");
 			exit (1);
 			break;
-		case 1:
+		default:
 			// Parent
 			close (slavefd);
 			wait (NULL);
 			printf ("Child started with PID %i\n", childpid);
-			host_run ();
+			process_load (childpid, &proc);
+			//host_rununtilfault ();
 			sleep (1);
 			free (cargs);
 			break;
@@ -199,6 +207,8 @@ void host_kill () {
 }
 
 void host_run () {
+	host_rununtilfault ();
+	return;
 	#ifdef linux
 		if (ptrace (PTRACE_CONT, childpid, 1, 0) == 0) {
 			
@@ -223,6 +233,7 @@ void host_run () {
 void host_printinfo () {
 	printf ("Child PID: %i\n", childpid);
 	host_dumpregs ();
+	debug_printinfo ();
 	return;
 }
 
@@ -249,11 +260,8 @@ int host_read (void * buffer, size_t len) {
 	return read (masterfd, buffer, len);
 }
 
-void host_getregs () {
-	if (ptrace (PTRACE_GETREGS, childpid, 0, (int) &regs) == -1) {
-		printf ("Failed to get registers\n");
-		return;
-	}
+int host_getregs () {
+	return ptrace (PTRACE_GETREGS, childpid, 0, (int) &regs);
 }
 
 void host_dumpregs () {
@@ -268,4 +276,31 @@ void host_dumpregs () {
 		printf ("ESP %.8lX\tEBP %.8lX\tESI %.8lX\tEDI %.8lX\n", regs.r_esp, regs.r_ebp, regs.r_esi, regs.r_edi);
 		printf ("EIP %.8lX\n", regs.r_eip);
 	#endif
+}
+
+void host_rununtilfault () {
+	s_process prevproc;
+	#ifdef BSD
+		struct reg prevregs;
+	#endif
+	#ifdef __linux__
+		struct user_regs_struct prevregs;
+	#endif
+	if (ptrace (PTRACE_SINGLESTEP, childpid, 0, 0) == -1) {
+		printf ("Failed to step\n");
+		return;
+	}
+	process_load (childpid, &proc);
+	host_getregs ();
+	printf ("\n");
+	prevregs.eip = 0;
+	while (1) {
+		ptrace (PTRACE_SINGLESTEP, childpid, 0, 0);
+		//process_load (childpid, &proc);
+		prevregs = regs;
+		//if (host_getregs () == -1) {break;}
+		printf ("EIP: %08.8lX \033[00G", regs.eip);
+		usleep (100);
+	}
+	printf ("\nProcess no longer running");
 }

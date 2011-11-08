@@ -59,7 +59,7 @@ void printtrace () {
 
 void handler (int sig, siginfo_t * info, void * ptr) {
 	#ifdef HAVE_SIGNAL_H
-		printf ("SIG %i\n", sig);
+		//printf ("SIG %i\n", sig);
 		if (sig == SIGINT || sig == SIGQUIT) {
 			printf ("\n");
 			module_cleanup ();
@@ -97,21 +97,18 @@ int main (int argc, char * argv []) {
 		sigaction (SIGILL, &act, NULL);
 		sigaction (SIGTERM, &act, NULL);
 		sigaction (SIGSEGV, &act, NULL);
-		/*signal (SIGINT, handler);
-		signal (SIGQUIT, handler);
-		//signal (SIGABRT, handler);
-		//signal (SIGFPE, handler);
-		//signal (SIGILL, handler);
-		//signal (SIGTERM, handler);
-		//signal (SIGSEGV, handler);*/
 	#endif
 	
+	interface_init (argc, argv);
 	host_init ();
 	workspace_init ();
 	workspace_choose ("default");
 	debug_init ();
 	
 	printf ("\n");
+	
+	interface_set_status ("Idle");
+	interface_loop ();
 	
 	char input [256];
 	vector <string> args;

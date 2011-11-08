@@ -28,6 +28,7 @@ bfd * bfdf = NULL;
 char * target = NULL;
 std::map <std::string, asymbol> symbols;
 std::map <std::string, bfd_section> sections;
+std::vector <std::string> vulnfunctions;
 
 int debug_ptrace_traceme () {
 	#ifdef __linux__
@@ -50,7 +51,11 @@ int debug_ptrace_getregs (pid_t pid, void * data) {
 void debug_init () {
 	bfd_init ();
 	target = getenv ("GNUTARGET");
-	printf ("Initialising debugging\n");
+	printf ("Initialising debugging...\n");
+	vulnfunctions.push_back ("gets");
+	vulnfunctions.push_back ("strcpy");
+	vulnfunctions.push_back ("strcat");
+	vulnfunctions.push_back ("sprintf");
 }
 
 void debug_cleanup () {
@@ -84,7 +89,10 @@ void debug_printsections () {
 		return;
 	}
 	printf ("Sections: (%i)\n", sections.size ());
-	
+	std::map <std::string, bfd_section> :: iterator it;
+	for (it = sections.begin (); it != sections.end (); it ++) {
+		printf ("\t%s\n", (*it).first.c_str ());
+	}
 }
 
 void debug_loadsymbols () {
@@ -126,6 +134,13 @@ void debug_printsymbols () {
 		return;
 	}
 	printf ("Symbols: (%i)\n", symbols.size ());
+	std::map <std::string, asymbol> :: iterator it;
+	for (it = symbols.begin (); it != symbols.end (); it ++) {
+		printf ("\t%s\n", (*it).first.c_str ());
+	}
+}
+
+void debug_printstack () {
 }
 
 int debug_open (char * fn) {
@@ -142,4 +157,9 @@ int debug_open (char * fn) {
 	debug_printsections ();
 	debug_printsymbols ();
 	return 0;
+}
+
+void debug_printinfo () {
+	debug_printsections ();
+	debug_printsymbols ();
 }
