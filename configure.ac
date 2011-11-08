@@ -20,6 +20,16 @@ AS_IF([test "x$enable_sqlite3" != "xno"], [
     AC_DEFINE([WITH_SQLITE3], [1], [Define if SQLite is enabled])
 ])
 
+AC_ARG_ENABLE([vte],
+              AS_HELP_STRING([--disable-vte], [Disable vte]))
+AS_IF([test "x$enable_vte" != "xno"], [
+	PKG_CHECK_MODULES(VTE, vte)
+	AC_SUBST(VTE_CFLAGS)
+	AC_SUBST(VTE_LIBS)
+    AC_CHECK_LIB([vte], [vte_terminal_new], , , )
+    AC_DEFINE([WITH_VTE], [1], [Define if vte is enabled])
+])
+
 ## CHECK PREREQUISITES ##
 
 # Check C Standard Library
@@ -70,14 +80,9 @@ AC_CHECK_HEADERS([dis-asm.h])
 AC_CHECK_LIB([opcodes], [buffer_read_memory], , , )
 
 # Check for GTK
-PKG_CHECK_MODULES(GTK, gtk+-2.0 >= 2.2)
+PKG_CHECK_MODULES(GTK, [gtk+-2.0 >= 2.2])
 AC_SUBST(GTK_CFLAGS)
 AC_SUBST(GTK_LIBS)
-
-# Check for VTE
-PKG_CHECK_MODULES(VTE, vte)
-AC_SUBST(VTE_CFLAGS)
-AC_SUBST(VTE_LIBS)
 
 # Check for something else, I can't remember what though O_o
 

@@ -23,7 +23,9 @@
 /******************************************************************************/
 
 #include <gtk/gtk.h>
-#include <vte/vte.h>
+#ifdef WITH_VTE
+	#include <vte/vte.h>
+#endif
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include "include.h"
 
@@ -34,7 +36,12 @@ GtkWidget * windowstatus;
 GtkWidget * windowvpaned;
 GtkWidget * windowvpanednotebook;
 GtkWidget * windowvpanednotebooklabel1;
-GtkWidget * windowvpanednotebookvte;
+#ifdef WITH_VTE
+	GtkWidget * windowvpanednotebookvte;
+#else
+	GtkTextBuffer * windowvpanednotebookvtebuffer;
+	GtkWidget * windowvpanednotebookvte;
+#endif
 GtkWidget * windowvpanednotebooklabel2;
 GtkWidget * windowvpanednotebooktextview;
 GtkTextBuffer * windowtextbuffer;
@@ -154,7 +161,12 @@ void interface_init (int argc, char * argv []) {
 	gtk_paned_add2 (GTK_PANED (windowvpaned), windowvpanednotebook);
 	gtk_widget_show (windowvpanednotebook);
 	
-	windowvpanednotebookvte = vte_terminal_new ();
+	#ifdef WITH_VTE
+		windowvpanednotebookvte = vte_terminal_new ();
+	#else
+		windowvpanednotebookvtebuffer = gtk_text_buffer_new (NULL);
+		windowvpanednotebookvte = gtk_text_view_new_with_buffer (GTK_TEXT_BUFFER (windowvpanednotebookvtebuffer));
+	#endif
 	windowvpanednotebooklabel1 = gtk_label_new ((const gchar *) "Terminal");
 	gtk_notebook_append_page (GTK_NOTEBOOK (windowvpanednotebook), windowvpanednotebookvte, windowvpanednotebooklabel1);
 	gtk_widget_show (windowvpanednotebookvte);
