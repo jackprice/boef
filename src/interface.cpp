@@ -91,13 +91,16 @@ void interface_set_status (char * status) {
 }
 
 void interface_log (char * err) {
+	if (gtk_notebook_get_current_page (GTK_NOTEBOOK (windowvpanednotebook)) != 1) {
+		gtk_label_set_markup (GTK_LABEL (windowvpanednotebooklabel2), (const gchar *) "<b>Log</b>");
+	}
 	gtk_text_buffer_insert (GTK_TEXT_BUFFER (windowtextbuffer), &windowtextiter, (const gchar *) err, -1);
 	return;
 }
 
 void interface_log_warn (char * err) {
 	if (gtk_notebook_get_current_page (GTK_NOTEBOOK (windowvpanednotebook)) != 1) {
-		gtk_label_set_markup (GTK_LABEL (windowvpanednotebooklabel2), (const gchar *) "<span foreground=\"orange\">Log</span>");
+		gtk_label_set_markup (GTK_LABEL (windowvpanednotebooklabel2), (const gchar *) "<b><span foreground=\"orange\">Log</span></b>");
 	}
 	gtk_text_buffer_insert_with_tags_by_name (GTK_TEXT_BUFFER (windowtextbuffer), &windowtextiter, (const gchar *) err, -1, (const gchar *) "orangefg", NULL);
 	return;
@@ -105,7 +108,7 @@ void interface_log_warn (char * err) {
 
 void interface_log_error (char * err) {
 	if (gtk_notebook_get_current_page (GTK_NOTEBOOK (windowvpanednotebook)) != 1) {
-		gtk_label_set_markup (GTK_LABEL (windowvpanednotebooklabel2), (const gchar *) "<span foreground=\"red\">Log</span>");
+		gtk_label_set_markup (GTK_LABEL (windowvpanednotebooklabel2), (const gchar *) "<b><span foreground=\"red\">Log</span></b>");
 	}
 	gtk_text_buffer_insert_with_tags_by_name (GTK_TEXT_BUFFER (windowtextbuffer), &windowtextiter, (const gchar *) err, -1, (const gchar *) "redfg", NULL);
 	return;
@@ -211,9 +214,6 @@ void interface_init (int argc, char * argv []) {
 	gtk_about_dialog_set_website (GTK_ABOUT_DIALOG (aboutwindow), PACKAGE_URL);
 	gtk_about_dialog_set_authors (GTK_ABOUT_DIALOG (aboutwindow), (const gchar **) authors);
 	gtk_about_dialog_set_logo (GTK_ABOUT_DIALOG (aboutwindow), gtk_image_get_pixbuf (GTK_IMAGE (gtk_image_new_from_file ("boef.png"))));
-	
-	interface_log ("GUI started\n");
-	interface_log_error ("Erm\n");
 }
 
 void interface_loop () {

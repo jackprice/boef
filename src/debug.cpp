@@ -55,16 +55,15 @@ void debug_init () {
 		bfd_init ();
 		target = getenv ("GNUTARGET");
 	#endif
-	printf ("Initialising debugging...\n");
+	interface_log ("Initialising debugging...\n");
 	vulnfunctions.push_back ("gets");
 	vulnfunctions.push_back ("strcpy");
 	vulnfunctions.push_back ("strcat");
 	vulnfunctions.push_back ("sprintf");
-	printf ("Initialising debugging\n");
 }
 
 void debug_cleanup () {
-	printf ("Cleaning up debugging...");
+	interface_log ("Cleaning up debugging...");
 	#ifdef HAVE_LIBBFD
 	if (bfdf != NULL) {
 			bfd_close (bfdf);

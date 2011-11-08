@@ -87,7 +87,10 @@ void host_childsig (int sig, siginfo_t * info, void * ptr) {
 }
 
 int host_init () {
-	printf ("Initalising host (%s)...\n", ttyname (0));
+	char * buf = (char *) malloc (25 + strlen (ttyname (0)));
+	sprintf (buf, "Initalising host (%s)...\n", ttyname (0));
+	interface_log (buf);
+	free (buf);
 	struct sigaction act;
 	memset (&act, 0, sizeof (act));
 	act.sa_sigaction = host_childsig;
@@ -97,7 +100,10 @@ int host_init () {
 }
 
 int host_init_pts () {
-	printf ("Creating slave pts for %s...\n", ttyname (0));
+	char * buf = (char *) malloc (30 + strlen (ttyname (0)));
+	sprintf (buf, "Creating slave pts for %s...\n", ttyname (0));
+	interface_log (buf);
+	free (buf);
 	if (slavefd > -1) {
 		close (slavefd);
 		slavefd = -1;
@@ -111,15 +117,21 @@ int host_init_pts () {
 		grantpt (masterfd) == -1 || 
 		unlockpt (masterfd) == -1 ||
 		(slavedevice = ptsname (masterfd)) == NULL) {
-		printf ("Failed to open pty: %s\n", strerror (errno));
-		exit (1);
+		char * buf = (char *) malloc (24 + strlen (strerror (errno)));
+		sprintf (buf, "Failed to open pty: %s\n", strerror (errno));
+		interface_error (buf);
+		free (buf);
+		return -1;
 	}
-	printf ("Opened %s\n", slavedevice);
+	buf = (char *) malloc (11 + strlen (slavedevice));
+	sprintf (buf, "Opened %s\n", slavedevice);
+	interface_log (buf);
+	free (buf);
 	slavefd = open (ptsname (masterfd), O_RDWR);
 }
 
 void host_cleanup () {
-	printf ("Cleaning up host...");
+	interface_log ("Cleaning up host...");
 	if (masterfd != -1) {
 		close (masterfd);
 		masterfd = -1;
@@ -132,7 +144,6 @@ void host_cleanup () {
 		kill (childpid, 9);
 		childpid = -1;
 	}
-	interface_printok (true);
 	return;
 }
 
@@ -142,10 +153,13 @@ void host_attach (pid_t pid) {
 
 void host_exec (char * exec) {
 	if (childpid > -1) {
-		printf ("Host currently attached - use host kill or host detach\n");
+		interface_error ("Host currently attached - use host kill or host detach\n");
 		return;
 	}
-	printf ("Executing %s...\n", exec);
+	char * buf = (char *) malloc (17 + strlen (exec));
+	sprintf (buf, "Executing %s...\n", exec);
+	interface_log (buf);
+	free (buf);
 	vector <string> args;
 	explode_string (exec, &args);
 	exec = (char *) args [0].c_str ();
@@ -157,27 +171,30 @@ void host_exec (char * exec) {
 	*(cargs + i + 1) = NULL;
 	
 	if (debug_open (cargs [0]) == -1) {
-		printf ("Could not debug %s\n", cargs [0]);
+		buf = (char *) malloc (20 + strlen (cargs [0]));
+		sprintf (buf, "Could not debug %s\n", cargs [0]);
+		interface_error (buf);
 		free (cargs);
+		free (buf);
 		return;
 	}
 	host_init_pts ();
 	
 	switch (childpid = fork ()) {
 		case -1:
-			printf ("Failed to fork\n");
+			interface_error ("Failed to fork\n");
 			return;
 		case 0:
 			// Child
 			#ifdef __linux__
 				if (setpgrp() == -1) {
-					printf ("Failed to detatch\n");
+					interface_error ("Failed to detatch\n");
 					exit (1);
 				}
 			#endif
 			#ifdef BSD
 				if (setpgrp(getpid (), getpid ()) == -1) {
-					printf ("Failed to detatch\n");
+					interface_error ("Failed to detatch\n");
 					exit (1);
 				}
 			#endif
@@ -190,7 +207,7 @@ void host_exec (char * exec) {
 			dup (slavefd);
 			debug_ptrace_traceme ();
 			execv (exec, cargs);
-			printf ("Failed to execute\n");
+			interface_error ("Failed to execute\n");
 			exit (1);
 			break;
 		default:
@@ -198,7 +215,10 @@ void host_exec (char * exec) {
 			// Parent
 			close (slavefd);
 			wait (NULL);
-			printf ("Child started with PID %i\n", childpid);
+			char * buf = (char *) malloc (35);
+			sprintf (buf, "Child started with PID %i\n", childpid);
+			interface_log (buf);
+			free (buf);
 			//process_load (childpid, &proc);
 			//host_rununtilfault ();
 			host_run ();
@@ -225,7 +245,10 @@ void host_run () {
 			
 		}
 		else {
-			printf ("Could not run: %.2X\n", errno);
+			char * buf = (char *) malloc (19 + strlen (strerror (errno)));
+			sprintf (buf, "Could not run: %s\n", strerror (errno));
+			interface_error (buf);
+			free (buf);
 		}
 		return;
 	#endif
@@ -234,7 +257,10 @@ void host_run () {
 			
 		}
 		else {
-			printf ("Could not run: %.2X\n", errno);
+			char * buf = (char *) malloc (19 + strlen (strerror (errno)));
+			sprintf (buf, "Could not run: %s\n", strerror (errno));
+			interface_error (buf);
+			free (buf);
 		}
 		return;
 	#endif
@@ -251,7 +277,7 @@ void host_printinfo () {
 void host_write (void * buffer, size_t len) {
 	printf ("Writing %i bytes to %i\n", len, childpid);
 	if (childpid == -1) {
-		printf ("No child attached\n");
+		interface_error ("No child attached\n");
 		return;
 	}
 	write (masterfd, buffer, len);
@@ -298,7 +324,7 @@ void host_rununtilfault () {
 		struct user_regs_struct prevregs;
 	#endif
 	if (ptrace (PTRACE_SINGLESTEP, childpid, 0, 0) == -1) {
-		printf ("Failed to step\n");
+		interface_error ("Failed to step\n");
 		return;
 	}
 	host_getregs ();
