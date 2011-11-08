@@ -53,8 +53,8 @@ int debug_ptrace_getregs (pid_t pid, void * data) {
 void debug_init () {
 	#ifdef HAVE_LIBBFD
 		bfd_init ();
+		target = getenv ("GNUTARGET");
 	#endif
-	target = getenv ("GNUTARGET");
 	printf ("Initialising debugging...\n");
 	vulnfunctions.push_back ("gets");
 	vulnfunctions.push_back ("strcpy");
