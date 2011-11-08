@@ -65,21 +65,21 @@ void debug_init () {
 
 void debug_cleanup () {
 	printf ("Cleaning up debugging...");
+	#ifdef HAVE_LIBBFD
 	if (bfdf != NULL) {
-		#ifdef HAVE_LIBBFD
 			bfd_close (bfdf);
 			bfdf = NULL;
-		#endif
 	}
+	#endif
 	interface_printok (true);
 }
 
 void debug_loadsections () {
-	if (bfdf == NULL) {
-		return;
-	}
-	sections.clear ();
 	#ifdef HAVE_LIBBFD
+		if (bfdf == NULL) {
+			return;
+		}
+		sections.clear ();
 		bfd_section * p;
 		for (p = bfdf -> sections; p != NULL; p = p -> next) {
 			sections [p -> name] = *p;
@@ -88,17 +88,17 @@ void debug_loadsections () {
 }
 
 void debug_printsections () {
-	if (bfdf == NULL) {
-		return;
-	}
-	if (sections.size () == 0) {
-		debug_loadsections ();
-	}
-	if (sections.size () == 0) {
-		return;
-	}
-	printf ("Sections: (%i)\n", sections.size ());
 	#ifdef HAVE_LIBBFD
+		if (bfdf == NULL) {
+			return;
+		}
+		if (sections.size () == 0) {
+			debug_loadsections ();
+		}
+		if (sections.size () == 0) {
+			return;
+		}
+		printf ("Sections: (%i)\n", sections.size ());
 		std::map <std::string, bfd_section> :: iterator it;
 		for (it = sections.begin (); it != sections.end (); it ++) {
 			printf ("\t%s\n", (*it).first.c_str ());
@@ -107,11 +107,11 @@ void debug_printsections () {
 }
 
 void debug_loadsymbols () {
-	if (bfdf == NULL) {
-		return;
-	}
-	symbols.clear ();
 	#ifdef HAVE_LIBBFD
+		if (bfdf == NULL) {
+			return;
+		}
+		symbols.clear ();
 		long storage_needed;
 		asymbol ** symbol_table;
 		long lsymbols;
@@ -137,17 +137,17 @@ void debug_loadsymbols () {
 }
 
 void debug_printsymbols () {
-	if (bfdf == NULL) {
-		return;
-	}
-	if (symbols.size () == 0) {
-		debug_loadsymbols ();
-	}
-	if (symbols.size () == 0) {
-		return;
-	}
-	printf ("Symbols: (%i)\n", symbols.size ());
 	#ifdef HAVE_LIBBFD
+		if (bfdf == NULL) {
+			return;
+		}
+		if (symbols.size () == 0) {
+			debug_loadsymbols ();
+		}
+		if (symbols.size () == 0) {
+			return;
+		}
+		printf ("Symbols: (%i)\n", symbols.size ());
 		std::map <std::string, asymbol> :: iterator it;
 		for (it = symbols.begin (); it != symbols.end (); it ++) {
 			printf ("\t%s\n", (*it).first.c_str ());
@@ -159,10 +159,10 @@ void debug_printstack () {
 }
 
 int debug_open (char * fn) {
-	if (bfdf != NULL) {
-		return -1;
-	}
 	#ifdef HAVE_LIBBFD
+		if (bfdf != NULL) {
+			return -1;
+		}
 		if ((bfdf = bfd_openr (fn, target)) == NULL) {
 			return -1;
 		}
