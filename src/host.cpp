@@ -32,7 +32,7 @@ int slavefd = -1;
 pid_t childpid = -1;
 int ptraceing = -1;
 int childrunning = 0;
-s_process proc;
+//s_process proc;
 #ifdef BSD
 	struct reg regs;
 #endif
@@ -199,7 +199,7 @@ void host_exec (char * exec) {
 			close (slavefd);
 			wait (NULL);
 			printf ("Child started with PID %i\n", childpid);
-			process_load (childpid, &proc);
+			//process_load (childpid, &proc);
 			//host_rununtilfault ();
 			host_run ();
 			sleep (1);
@@ -273,11 +273,6 @@ int host_read (void * buffer, size_t len) {
 
 int host_getregs () {
 	return ptrace (PTRACE_GETREGS, childpid, 0, (int) &regs);
-void host_getregs () {
-	if (ptrace (PTRACE_GETREGS, childpid, 0, (int) &regs) == -1) {
-		printf ("Failed to get registers\n");
-		return;
-	}
 }
 
 void host_dumpregs () {
@@ -295,7 +290,7 @@ void host_dumpregs () {
 }
 
 void host_rununtilfault () {
-	s_process prevproc;
+	//s_process prevproc;
 	#ifdef BSD
 		struct reg prevregs;
 	#endif
@@ -306,14 +301,13 @@ void host_rununtilfault () {
 		printf ("Failed to step\n");
 		return;
 	}
-	process_load (childpid, &proc);
 	host_getregs ();
 	printf ("\n");
-	prevregs.eip = 0;
+	//prevregs.eip = 0;
 	while (1) {
 		ptrace (PTRACE_SINGLESTEP, childpid, 0, 0);
 		//process_load (childpid, &proc);
-		prevregs = regs;
+		//prevregs = regs;
 		//if (host_getregs () == -1) {break;}
 		printf ("EIP: %08.8lX \033[00G", regs.eip);
 		usleep (100);
