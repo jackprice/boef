@@ -79,26 +79,6 @@ PKG_CHECK_MODULES(VTE, vte)
 AC_SUBST(VTE_CFLAGS)
 AC_SUBST(VTE_LIBS)
 
-# Check for wx
-#AM_OPTIONS_WXCONFIG
-#reqwx=2.4.0
-#AM_PATH_WXCONFIG($reqwx, wxWin=1)
-#if test "$wxWin" != 1; then
-#	AC_MSG_ERROR([
-#		wxWidgets must be installed on your system.
- #
-#		Please check that wx-config is in path, the directory
-#		where wxWidgets libraries are installed (returned by
-#		'wx-config --libs' or 'wx-config --static --libs' command)
-#		is in LD_LIBRARY_PATH or equivalent variable and
-#		wxWidgets version is $reqwx or above.
-#		])
-#fi
-#CPPFLAGS="$CPPFLAGS $WX_CPPFLAGS"
-#CXXFLAGS="$CXXFLAGS $WX_CXXFLAGS_ONLY"
-#CFLAGS="$CFLAGS $WX_CFLAGS_ONLY"
-#LIBS="$LIBS $WX_LIBS"
-
 # Check for something else, I can't remember what though O_o
 
 # Check for cstd headers

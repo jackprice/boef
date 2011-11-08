@@ -24,5 +24,7 @@ void host_readline ();
 int host_getregs ();
 void host_dumpregs ();
 void host_rununtilfault ();
+void host_getregs ();
+void host_dumpregs ();
 
 #endif

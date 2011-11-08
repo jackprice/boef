@@ -56,6 +56,7 @@ void debug_init () {
 	vulnfunctions.push_back ("strcpy");
 	vulnfunctions.push_back ("strcat");
 	vulnfunctions.push_back ("sprintf");
+	printf ("Initialising debugging\n");
 }
 
 void debug_cleanup () {
