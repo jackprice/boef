@@ -321,24 +321,25 @@ void host_rununtilfault () {
 	//s_process prevproc;
 	#ifdef BSD
 		struct reg prevregs;
+		return;
 	#endif
 	#ifdef __linux__
 		struct user_regs_struct prevregs;
+		if (ptrace (PTRACE_SINGLESTEP, childpid, 0, 0) == -1) {
+			interface_error ("Failed to step\n");
+			return;
+		}
+		host_getregs ();
+		printf ("\n");
+		//prevregs.eip = 0;
+		while (1) {
+			ptrace (PTRACE_SINGLESTEP, childpid, 0, 0);
+			//process_load (childpid, &proc);
+			//prevregs = regs;
+			//if (host_getregs () == -1) {break;}
+			printf ("EIP: %08.8lX \033[00G", regs.eip);
+			usleep (100);
+		}
+		printf ("\nProcess no longer running");
 	#endif
-	if (ptrace (PTRACE_SINGLESTEP, childpid, 0, 0) == -1) {
-		interface_error ("Failed to step\n");
-		return;
-	}
-	host_getregs ();
-	printf ("\n");
-	//prevregs.eip = 0;
-	while (1) {
-		ptrace (PTRACE_SINGLESTEP, childpid, 0, 0);
-		//process_load (childpid, &proc);
-		//prevregs = regs;
-		//if (host_getregs () == -1) {break;}
-		printf ("EIP: %08.8lX \033[00G", regs.eip);
-		usleep (100);
-	}
-	printf ("\nProcess no longer running");
 }

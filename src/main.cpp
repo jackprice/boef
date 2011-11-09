@@ -112,9 +112,8 @@ int main (int argc, char * argv []) {
 	vector <string> args;
 	while (running) {
 		args.clear ();
-		bzero (input, 256);
+		memset (input, 0, 256);
 		printf ("boef > ");
-		bzero (input, 256);
 		fgets (input, 256, stdin);
 		if (strlen (input) > 0) {
 			input [strlen (input) - 1] = 0;
