@@ -104,8 +104,6 @@ int main (int argc, char * argv []) {
 	workspace_init ();
 	workspace_choose ("default");
 	debug_init ();
-	
-	
 		
 	interface_set_status ("Idle");
 	interface_loop ();

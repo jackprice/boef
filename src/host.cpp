@@ -123,6 +123,7 @@ int host_init_pts () {
 		free (buf);
 		return -1;
 	}
+	interface_pty_setup (masterfd);
 	buf = (char *) malloc (11 + strlen (slavedevice));
 	sprintf (buf, "Opened %s\n", slavedevice);
 	interface_log (buf);
@@ -198,6 +199,7 @@ void host_exec (char * exec) {
 					exit (1);
 				}
 			#endif
+			interface_childpty_setup ();
 			close (masterfd);
 			close (0);
 			close (1);

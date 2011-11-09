@@ -1,4 +1,4 @@
-AC_INIT([Buffer Overflow Exploitation Framework], [0.1], [boef@quetuo.net], [boef], [http://www.quetuo.net/boef])
+AC_INIT(boef, 0.1, http://www.quetuo.net/boef)
 AC_CONFIG_AUX_DIR([.])
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 AC_PROG_CXX

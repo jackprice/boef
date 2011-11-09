@@ -38,11 +38,15 @@ GtkWidget * windowvpanedhpaned;
 GtkWidget * windowvpanedhpanednotebook;
 GtkWidget * windowvpanedhpanednotebooklabel1;
 GtkWidget * windowvpanedhpanednotebooklabel2;
+GtkTextBuffer * windowcodebuffer;
+GtkWidget * windowvpanedhpanedtextview;
 GtkWidget * windowvpanednotebook;
 GtkWidget * windowvpanednotebooklabel1;
 GtkWidget * windowvpanedhpanednotebookscrolledwindow1;
+GtkWidget * windowvpanedhpanednotebookscrolledwindow2;
 #ifdef WITH_VTE
 	GtkWidget * windowvpanednotebookvte;
+	VtePty * windowvpanednotebookpty;
 #else
 	GtkTextBuffer * windowvpanednotebookvtebuffer;
 	GtkWidget * windowvpanednotebookvte;
@@ -62,6 +66,13 @@ GtkWidget * workspacewindow;
 GtkWidget * aboutwindow;
 //GdkPixBuf * logo;
 
+static void interface_exit () {
+	gtk_main_quit ();
+	if (raise (2) != 0) {
+		abort ();
+	}
+}
+
 static gboolean delete_event (GtkWidget * widget, GdkEvent * event, gpointer data) {
 	if (widget == window) {
 		return false; // TODO: remove
@@ -79,10 +90,7 @@ static gboolean delete_event (GtkWidget * widget, GdkEvent * event, gpointer dat
 }
 
 static void destroy (GtkWidget * widget, GdkEvent * event) {
-	gtk_main_quit ();
-	if (raise (2) != 0) {
-		abort ();
-	}
+	interface_exit ();
 }
 
 static gboolean windownotepad_focus (GtkNotebook * notebook, gpointer arg1, guint arg2, gpointer data) {
@@ -197,6 +205,17 @@ void interface_init (int argc, char * argv []) {
 	gtk_notebook_append_page (GTK_NOTEBOOK (windowvpanedhpanednotebook), windowvpanedhpanednotebookscrolledwindow1, windowvpanedhpanednotebooklabel1);
 	gtk_widget_show (windowvpanedhpanednotebooklabel1);
 	gtk_widget_show (windowvpanedhpanednotebookscrolledwindow1);
+
+	windowvpanedhpanednotebooklabel2 = gtk_label_new ((const gchar *) "Sections");
+	windowvpanedhpanednotebookscrolledwindow2 = gtk_scrolled_window_new (NULL, NULL);
+	gtk_notebook_append_page (GTK_NOTEBOOK (windowvpanedhpanednotebook), windowvpanedhpanednotebookscrolledwindow2, windowvpanedhpanednotebooklabel2);
+	gtk_widget_show (windowvpanedhpanednotebooklabel2);
+	gtk_widget_show (windowvpanedhpanednotebookscrolledwindow2);
+
+	windowcodebuffer = gtk_text_buffer_new (NULL);
+	windowvpanedhpanedtextview = gtk_text_view_new_with_buffer (windowcodebuffer);
+	gtk_paned_add2 (GTK_PANED (windowvpanedhpaned), windowvpanedhpanedtextview);
+	gtk_widget_show (windowvpanedhpanedtextview);
 	
 	windowvpanednotebook = gtk_notebook_new ();
 	gtk_paned_add2 (GTK_PANED (windowvpaned), windowvpanednotebook);
@@ -205,6 +224,7 @@ void interface_init (int argc, char * argv []) {
 	
 	#ifdef WITH_VTE
 		windowvpanednotebookvte = vte_terminal_new ();
+		
 	#else
 		windowvpanednotebookvtebuffer = gtk_text_buffer_new (NULL);
 		windowvpanednotebookvte = gtk_text_view_new_with_buffer (GTK_TEXT_BUFFER (windowvpanednotebookvtebuffer));
@@ -244,6 +264,15 @@ void interface_init (int argc, char * argv []) {
 	
 	
 	interface_workspace_chooser ();
+}
+
+void interface_pty_setup (int fd) {
+	windowvpanednotebookpty = vte_pty_new_foreign (fd, NULL);
+	vte_terminal_set_pty_object (VTE_TERMINAL (windowvpanednotebookvte), windowvpanednotebookpty);
+}
+
+void interface_childpty_setup () {
+	vte_pty_child_setup (windowvpanednotebookpty);
 }
 
 void interface_loop () {
