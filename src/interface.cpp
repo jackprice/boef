@@ -34,8 +34,13 @@ char * authors [] = {"Quetuo <quetuo@quetuo.net>", NULL};
 GtkWidget * window;
 GtkWidget * windowstatus;
 GtkWidget * windowvpaned;
+GtkWidget * windowvpanedhpaned;
+GtkWidget * windowvpanedhpanednotebook;
+GtkWidget * windowvpanedhpanednotebooklabel1;
+GtkWidget * windowvpanedhpanednotebooklabel2;
 GtkWidget * windowvpanednotebook;
 GtkWidget * windowvpanednotebooklabel1;
+GtkWidget * windowvpanedhpanednotebookscrolledwindow1;
 #ifdef WITH_VTE
 	GtkWidget * windowvpanednotebookvte;
 #else
@@ -51,6 +56,8 @@ GtkWidget * windowmenufile;
 GtkWidget * windowmenuworkspace;
 GtkWidget * windowmenuhelp;
 GtkWidget * windowmenuhelpabout;
+
+GtkWidget * workspacewindow;
 
 GtkWidget * aboutwindow;
 //GdkPixBuf * logo;
@@ -140,6 +147,10 @@ void interface_about () {
 	gtk_widget_hide (aboutwindow);
 }
 
+void interface_workspace_chooser () {
+	
+}
+
 void interface_init (int argc, char * argv []) {
 	gtk_init (&argc, &argv);
 	
@@ -172,6 +183,20 @@ void interface_init (int argc, char * argv []) {
 	windowvpaned = gtk_vpaned_new ();
 	gtk_box_pack_start (GTK_BOX (vbox), windowvpaned, TRUE, TRUE, 0);
 	gtk_widget_show (windowvpaned);
+	
+	windowvpanedhpaned = gtk_hpaned_new ();
+	gtk_paned_add1 (GTK_PANED (windowvpaned), windowvpanedhpaned);
+	gtk_widget_show (windowvpanedhpaned);
+	
+	windowvpanedhpanednotebook = gtk_notebook_new ();
+	gtk_paned_add1 (GTK_PANED (windowvpanedhpaned), windowvpanedhpanednotebook);
+	gtk_widget_show (windowvpanedhpanednotebook);
+	
+	windowvpanedhpanednotebooklabel1 = gtk_label_new ((const gchar *) "Functions");
+	windowvpanedhpanednotebookscrolledwindow1 = gtk_scrolled_window_new (NULL, NULL);
+	gtk_notebook_append_page (GTK_NOTEBOOK (windowvpanedhpanednotebook), windowvpanedhpanednotebookscrolledwindow1, windowvpanedhpanednotebooklabel1);
+	gtk_widget_show (windowvpanedhpanednotebooklabel1);
+	gtk_widget_show (windowvpanedhpanednotebookscrolledwindow1);
 	
 	windowvpanednotebook = gtk_notebook_new ();
 	gtk_paned_add2 (GTK_PANED (windowvpaned), windowvpanednotebook);
@@ -214,6 +239,11 @@ void interface_init (int argc, char * argv []) {
 	gtk_about_dialog_set_website (GTK_ABOUT_DIALOG (aboutwindow), PACKAGE_URL);
 	gtk_about_dialog_set_authors (GTK_ABOUT_DIALOG (aboutwindow), (const gchar **) authors);
 	gtk_about_dialog_set_logo (GTK_ABOUT_DIALOG (aboutwindow), gtk_image_get_pixbuf (GTK_IMAGE (gtk_image_new_from_file ("boef.png"))));
+	
+	// Workspace chooser
+	
+	
+	interface_workspace_chooser ();
 }
 
 void interface_loop () {

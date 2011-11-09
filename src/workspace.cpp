@@ -133,7 +133,9 @@ void workspace_init () {
 		}
 		
 		int error = sqlite3_exec (db, "CREATE TABLE IF NOT EXISTS workspace(id INTEGER PRIMARY KEY ASC, name TEXT);", 0, 0, 0)
-			| sqlite3_exec (db, "CREATE TABLE IF NOT EXISTS log(workspace_id INTEGER, value TEXT);", 0, 0, 0);
+			| sqlite3_exec (db, "CREATE TABLE IF NOT EXISTS log(workspace_id INTEGER, value TEXT);", 0, 0, 0)
+			| sqlite3_exec (db, "CREATE TABLE IF NOT EXISTS option(workspace_id INTEGER, name TEXT, value TEXT);", 0, 0, 0)
+			| sqlite3_exec (db, "DELETE FROM option WHERE workspace_id=1;", 0, 0, 0);
 		if (error != SQLITE_OK) {
 			interface_error ("Failed to update database\n");
 			exit (1);
@@ -158,6 +160,78 @@ void workspace_cleanup () {
 
 char * workspace_getname () {
 	return workspace;
+}
+
+char * workspace_getoption (char * option) {
+	#ifdef WITH_SQLITE3
+		sqlite3_stmt * stmt;
+		if (sqlite3_prepare (db, "SELECT value FROM option WHERE name=? AND workspace_id=?;", -1, &stmt, 0) != SQLITE_OK) {
+			interface_error ("Failed to SELECT\n");
+			return NULL;
+		}
+		if (sqlite3_bind_text (stmt, 1, (const char *) option, -1, SQLITE_TRANSIENT) != SQLITE_OK) {
+			interface_error ("Failed to bind\n");
+			return NULL;
+		}
+		if (sqlite3_bind_int (stmt, 2, workspace_id) != SQLITE_OK) {
+			interface_error ("Failed to bind\n");
+			return NULL;
+		}
+		if (sqlite3_step (stmt) == SQLITE_DONE) {
+			return NULL;
+		}
+		char * ret = (char *) sqlite3_column_text (stmt, 0);
+		sqlite3_finalize (stmt);
+		return ret;
+	#endif
+}
+
+int workspace_setoption (char * option, char * value) {
+	#ifdef WITH_SQLITE3
+		sqlite3_stmt * stmt;
+		if (workspace_getoption (option) == NULL) {
+			if (sqlite3_prepare (db, "INSERT INTO option (workspace_id, name,value) VALUES (?,?,?);", -1, &stmt, 0) != SQLITE_OK) {
+				interface_error ("Failed to INSERT\n");
+				return -1;
+			}
+			if (sqlite3_bind_int (stmt, 1, workspace_id) != SQLITE_OK) {
+				interface_error ("Failed to bind\n");
+				return NULL;
+			}
+			if (sqlite3_bind_text (stmt, 2, (const char *) option, -1, SQLITE_TRANSIENT) != SQLITE_OK) {
+				interface_error ("Failed to bind\n");
+				return -1;
+			}
+			if (sqlite3_bind_text (stmt, 3, (const char *) value, -1, SQLITE_TRANSIENT) != SQLITE_OK) {
+				interface_error ("Failed to bind\n");
+				return -1;
+			}
+			sqlite3_step (stmt);
+			sqlite3_finalize (stmt);
+			return 0;
+		}
+		else {
+			if (sqlite3_prepare (db, "UPDATE option set value=? WHERE name=? AND workspace_id=?;", -1, &stmt, 0) != SQLITE_OK) {
+				interface_error ("Failed to INSERT\n");
+				return -1;
+			}
+			if (sqlite3_bind_text (stmt, 1, (const char *) value, -1, SQLITE_TRANSIENT) != SQLITE_OK) {
+				interface_error ("Failed to bind\n");
+				return -1;
+			}
+			if (sqlite3_bind_text (stmt, 2, (const char *) option, -1, SQLITE_TRANSIENT) != SQLITE_OK) {
+				interface_error ("Failed to bind\n");
+				return -1;
+			}
+			if (sqlite3_bind_int (stmt, 3, workspace_id) != SQLITE_OK) {
+				interface_error ("Failed to bind\n");
+				return NULL;
+			}
+			sqlite3_step (stmt);
+			sqlite3_finalize (stmt);
+			return 0;
+		}
+	#endif
 }
 
 void workspace_log (char * msg) {
