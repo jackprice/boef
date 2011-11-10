@@ -17,5 +17,6 @@ void interface_log_warn (char * err);
 void interface_log_error (char * err);
 void interface_childpty_setup ();
 void interface_pty_setup (int fd);
+void interface_set_progress (double frac);
 
 #endif

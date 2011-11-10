@@ -33,6 +33,10 @@ char * authors [] = {"Quetuo <quetuo@quetuo.net>", NULL};
 
 GtkWidget * window;
 GtkWidget * windowstatus;
+GtkWidget * windowstatusprogress;
+GtkWidget * windowtoolbar;
+GtkToolItem * windowtoolbarnew;
+GtkToolItem * windowtoolbaropen;
 GtkWidget * windowvpaned;
 GtkWidget * windowvpanedhpaned;
 GtkWidget * windowvpanedhpanednotebook;
@@ -100,9 +104,43 @@ static gboolean windownotepad_focus (GtkNotebook * notebook, gpointer arg1, guin
 	return false;
 }
 
+void interface_new (GtkToolButton * button, gpointer user_data) {
+	gtk_widget_set_visible (windowvpaned, false);
+	gtk_widget_set_sensitive (GTK_WIDGET (windowtoolbaropen), true);
+}
+
+void interface_open (GtkToolButton * button, gpointer user_data) {
+	GtkWidget * dialog = gtk_file_chooser_dialog_new ("Open File",
+	                                                  GTK_WINDOW (window),
+	                                                  GTK_FILE_CHOOSER_ACTION_OPEN,
+	                                                  GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+	                                                  GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
+	                                                  NULL);
+	if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT) {
+		char * filename;
+		filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (dialog));
+		interface_log (filename);
+		g_free (filename);
+		gtk_widget_set_visible (windowvpaned, true);
+		gtk_widget_set_sensitive (GTK_WIDGET (windowtoolbaropen), false);
+		interface_set_progress (-1.0);
+	}
+	gtk_widget_destroy (dialog);
+}
+
 void interface_set_status (char * status) {
 	gtk_statusbar_pop (GTK_STATUSBAR (windowstatus), gtk_statusbar_get_context_id (GTK_STATUSBAR (windowstatus), "status"));
 	gtk_statusbar_push (GTK_STATUSBAR (windowstatus), gtk_statusbar_get_context_id (GTK_STATUSBAR (windowstatus), "status"), status);
+}
+
+void interface_set_progress (double frac) {
+	if (frac < 0) {
+		//gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR (windowstatusprogress), 1.0);
+		gtk_progress_bar_pulse (GTK_PROGRESS_BAR (windowstatusprogress));
+	}
+	else {
+		gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR (windowstatusprogress), frac);
+	}
 }
 
 void interface_log (char * err) {
@@ -187,10 +225,22 @@ void interface_init (int argc, char * argv []) {
 	windowmenuhelpabout = gtk_menu_item_new_with_mnemonic ("_About");
 	//gtk_menu_append (GTK_MENU_ITEM (windowmenuhelp), windowmenuhelpabout);
 	//gtk_widget_show (windowmenuhelpabout);
+
+	windowtoolbar = gtk_toolbar_new ();
+	windowtoolbarnew = gtk_tool_button_new_from_stock ("gtk-new");
+	g_signal_connect (windowtoolbarnew, "clicked", G_CALLBACK (interface_new), NULL);
+	gtk_toolbar_insert (GTK_TOOLBAR (windowtoolbar), windowtoolbarnew, -1);
+	windowtoolbaropen = gtk_tool_button_new_from_stock ("gtk-open");
+	g_signal_connect (windowtoolbaropen, "clicked", G_CALLBACK (interface_open), NULL);
+	gtk_toolbar_insert (GTK_TOOLBAR (windowtoolbar), windowtoolbaropen, -1);
+	gtk_widget_show (windowtoolbar);
+	gtk_widget_show (GTK_WIDGET (windowtoolbaropen));
+	gtk_widget_show (GTK_WIDGET (windowtoolbarnew));
+	gtk_box_pack_start (GTK_BOX (vbox), windowtoolbar, FALSE, TRUE, 0);
 	
 	windowvpaned = gtk_vpaned_new ();
 	gtk_box_pack_start (GTK_BOX (vbox), windowvpaned, TRUE, TRUE, 0);
-	gtk_widget_show (windowvpaned);
+	//gtk_widget_show (windowvpaned);
 	
 	windowvpanedhpaned = gtk_hpaned_new ();
 	gtk_paned_add1 (GTK_PANED (windowvpaned), windowvpanedhpaned);
@@ -249,6 +299,9 @@ void interface_init (int argc, char * argv []) {
 	gtk_widget_show (windowstatus);
 	gtk_box_pack_end (GTK_BOX (vbox), windowstatus, FALSE, TRUE, 0);
 	gtk_statusbar_push (GTK_STATUSBAR (windowstatus), gtk_statusbar_get_context_id (GTK_STATUSBAR (windowstatus), "status"), "");
+	windowstatusprogress = gtk_progress_bar_new ();
+	gtk_widget_show (windowstatusprogress);
+	gtk_box_pack_start (GTK_BOX (windowstatus), windowstatusprogress, FALSE, TRUE, 0);
 	
 	// About window
 	aboutwindow = gtk_about_dialog_new ();
