@@ -4,3 +4,7 @@ boef_SOURCES = main.cpp modules.cpp host.cpp workspace.cpp interface.cpp fuzz.cp
 boef_LDADD = $(GTK_LIBS) $(VTE_LIBS)
 boef_CFLAGS = $(GTK_CFLAGS) $(VTE_CFLAGS)
 boef_CXXFLAGS = $(GTK_CFLAGS) $(VTE_CFLAGS)
+
+AM_CPPFLAGS = \
+	$(VTE_CFLAGS) \
+	$(GTK_CFLAGS)

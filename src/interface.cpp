@@ -32,16 +32,26 @@
 char * authors [] = {"Quetuo <quetuo@quetuo.net>", NULL};
 
 GtkWidget * window;
+// Status bar
 GtkWidget * windowstatus;
 GtkWidget * windowstatusprogress;
+// Toolbar
 GtkWidget * windowtoolbar;
 GtkToolItem * windowtoolbarnew;
 GtkToolItem * windowtoolbaropen;
+GtkToolItem * windowtoolbarrun;
+GtkToolItem * windowtoolbarstop;
+GtkToolItem * windowtoolbarrestart;
 GtkWidget * windowvpaned;
+// Sidebar
 GtkWidget * windowvpanedhpaned;
 GtkWidget * windowvpanedhpanednotebook;
+GtkListStore * windowvpanedhpanednotebookliststore1;
+GtkWidget * windowvpanedhpanednotebooktreeview1;
+GtkListStore * windowvpanedhpanednotebookliststore2;
 GtkWidget * windowvpanedhpanednotebooklabel1;
 GtkWidget * windowvpanedhpanednotebooklabel2;
+// Main
 GtkTextBuffer * windowcodebuffer;
 GtkWidget * windowvpanedhpanedtextview;
 GtkWidget * windowvpanednotebook;
@@ -79,7 +89,7 @@ static void interface_exit () {
 
 static gboolean delete_event (GtkWidget * widget, GdkEvent * event, gpointer data) {
 	if (widget == window) {
-		return false; // TODO: remove
+		//return false; // TODO: remove
 		GtkWidget * dialog = gtk_message_dialog_new (GTK_WINDOW (window), GTK_DIALOG_DESTROY_WITH_PARENT, GTK_MESSAGE_QUESTION, GTK_BUTTONS_YES_NO, "Are you sure to quit?");
 		gtk_window_set_title(GTK_WINDOW(dialog), "Question");
 		if (gtk_dialog_run (GTK_DIALOG(dialog)) == GTK_RESPONSE_YES) {
@@ -107,6 +117,7 @@ static gboolean windownotepad_focus (GtkNotebook * notebook, gpointer arg1, guin
 void interface_new (GtkToolButton * button, gpointer user_data) {
 	gtk_widget_set_visible (windowvpaned, false);
 	gtk_widget_set_sensitive (GTK_WIDGET (windowtoolbaropen), true);
+	gtk_widget_set_sensitive (GTK_WIDGET (windowtoolbarrun), false);
 }
 
 void interface_open (GtkToolButton * button, gpointer user_data) {
@@ -119,13 +130,29 @@ void interface_open (GtkToolButton * button, gpointer user_data) {
 	if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT) {
 		char * filename;
 		filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (dialog));
-		interface_log (filename);
-		g_free (filename);
 		gtk_widget_set_visible (windowvpaned, true);
 		gtk_widget_set_sensitive (GTK_WIDGET (windowtoolbaropen), false);
-		interface_set_progress (-1.0);
+		gtk_widget_set_sensitive (GTK_WIDGET (windowtoolbarrun), true);
+		if (debug_open (filename) == -1) {
+			interface_error ("Could not load file\n");
+		}
+		g_free (filename);
 	}
 	gtk_widget_destroy (dialog);
+}
+
+void interface_run (GtkToolButton * button, gpointer user_data) {
+}
+
+void interface_symbol_add (char * name, unsigned int address) {
+	char buf [20];
+	sprintf (buf, "0x%0.8X", address);
+	GtkTreeIter iter;
+	gtk_list_store_append (windowvpanedhpanednotebookliststore1, &iter);
+	gtk_list_store_set (windowvpanedhpanednotebookliststore1, &iter,
+	                    0, name,
+	                    1, buf,
+	                    -1);
 }
 
 void interface_set_status (char * status) {
@@ -233,9 +260,13 @@ void interface_init (int argc, char * argv []) {
 	windowtoolbaropen = gtk_tool_button_new_from_stock ("gtk-open");
 	g_signal_connect (windowtoolbaropen, "clicked", G_CALLBACK (interface_open), NULL);
 	gtk_toolbar_insert (GTK_TOOLBAR (windowtoolbar), windowtoolbaropen, -1);
+	windowtoolbarrun = gtk_tool_button_new_from_stock ("gtk-execute");
+	g_signal_connect (windowtoolbarrun, "clicked", G_CALLBACK (interface_run), NULL);
+	gtk_toolbar_insert (GTK_TOOLBAR (windowtoolbar), windowtoolbarrun, -1);
 	gtk_widget_show (windowtoolbar);
 	gtk_widget_show (GTK_WIDGET (windowtoolbaropen));
 	gtk_widget_show (GTK_WIDGET (windowtoolbarnew));
+	gtk_widget_show (GTK_WIDGET (windowtoolbarrun));
 	gtk_box_pack_start (GTK_BOX (vbox), windowtoolbar, FALSE, TRUE, 0);
 	
 	windowvpaned = gtk_vpaned_new ();
@@ -251,10 +282,32 @@ void interface_init (int argc, char * argv []) {
 	gtk_widget_show (windowvpanedhpanednotebook);
 	
 	windowvpanedhpanednotebooklabel1 = gtk_label_new ((const gchar *) "Functions");
+	windowvpanedhpanednotebookliststore1 = gtk_list_store_new (2, G_TYPE_STRING, G_TYPE_STRING);
+	windowvpanedhpanednotebooktreeview1 = gtk_tree_view_new_with_model (GTK_TREE_MODEL (windowvpanedhpanednotebookliststore1));
 	windowvpanedhpanednotebookscrolledwindow1 = gtk_scrolled_window_new (NULL, NULL);
+	gtk_container_add (GTK_CONTAINER (windowvpanedhpanednotebookscrolledwindow1), windowvpanedhpanednotebooktreeview1);
 	gtk_notebook_append_page (GTK_NOTEBOOK (windowvpanedhpanednotebook), windowvpanedhpanednotebookscrolledwindow1, windowvpanedhpanednotebooklabel1);
 	gtk_widget_show (windowvpanedhpanednotebooklabel1);
 	gtk_widget_show (windowvpanedhpanednotebookscrolledwindow1);
+	gtk_widget_show (windowvpanedhpanednotebooktreeview1);
+	GtkTreeIter iter;
+	/*gtk_list_store_append (windowvpanedhpanednotebookliststore1, &iter);
+	gtk_list_store_set (windowvpanedhpanednotebookliststore1, &iter,
+	                    0, "Hello, world",
+	                    1, 1231312,
+	                    -1);*/
+	GtkTreeViewColumn * col = gtk_tree_view_column_new ();
+	gtk_tree_view_column_set_title (col, "Name");
+	GtkCellRenderer * cell = gtk_cell_renderer_text_new ();
+	gtk_tree_view_column_pack_start (GTK_TREE_VIEW_COLUMN (col), GTK_CELL_RENDERER (cell), true);	
+	gtk_tree_view_append_column (GTK_TREE_VIEW (windowvpanedhpanednotebooktreeview1), col);
+	gtk_tree_view_column_add_attribute (GTK_TREE_VIEW_COLUMN (col), GTK_CELL_RENDERER (cell), "text", 0);
+	col = gtk_tree_view_column_new ();
+	gtk_tree_view_column_set_title (col, "Address");
+	cell = gtk_cell_renderer_text_new ();
+	gtk_tree_view_column_pack_start (GTK_TREE_VIEW_COLUMN (col), GTK_CELL_RENDERER (cell), true);
+	gtk_tree_view_append_column (GTK_TREE_VIEW (windowvpanedhpanednotebooktreeview1), col);
+	gtk_tree_view_column_add_attribute (GTK_TREE_VIEW_COLUMN (col), GTK_CELL_RENDERER (cell), "text", 1);
 
 	windowvpanedhpanednotebooklabel2 = gtk_label_new ((const gchar *) "Sections");
 	windowvpanedhpanednotebookscrolledwindow2 = gtk_scrolled_window_new (NULL, NULL);

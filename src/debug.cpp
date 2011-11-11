@@ -130,6 +130,7 @@ void debug_loadsymbols () {
 		for (i = 0; i < lsymbols; i ++) {
 			//printf ("%02.2i: %08.8p\t %s \n", i, symbol_table [i] -> value, symbol_table [i] -> name);
 			symbols [symbol_table [i] -> name] = *(symbol_table [i]);
+			interface_symbol_add ((char *) symbol_table [i] -> name, 0);
 		}
 		free (symbol_table);
 	#endif
@@ -158,6 +159,7 @@ void debug_printstack () {
 }
 
 int debug_open (char * fn) {
+	interface_set_progress (-1.0);
 	#ifdef HAVE_LIBBFD
 		if (bfdf != NULL) {
 			return -1;
@@ -172,6 +174,7 @@ int debug_open (char * fn) {
 	#endif
 	debug_printsections ();
 	debug_printsymbols ();
+	interface_set_progress (0);
 	return 0;
 }
 
