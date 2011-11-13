@@ -49,6 +49,7 @@ GtkWidget * windowvpanedhpanednotebook;
 GtkListStore * windowvpanedhpanednotebookliststore1;
 GtkWidget * windowvpanedhpanednotebooktreeview1;
 GtkListStore * windowvpanedhpanednotebookliststore2;
+GtkWidget * windowvpanedhpanednotebooktreeview2;
 GtkWidget * windowvpanedhpanednotebooklabel1;
 GtkWidget * windowvpanedhpanednotebooklabel2;
 // Main
@@ -150,6 +151,17 @@ void interface_symbol_add (char * name, unsigned int address) {
 	GtkTreeIter iter;
 	gtk_list_store_append (windowvpanedhpanednotebookliststore1, &iter);
 	gtk_list_store_set (windowvpanedhpanednotebookliststore1, &iter,
+	                    0, name,
+	                    1, buf,
+	                    -1);
+}
+
+void interface_section_add (char * name, unsigned int address) {
+	char buf [20];
+	sprintf (buf, "0x%0.8X", address);
+	GtkTreeIter iter;
+	gtk_list_store_append (windowvpanedhpanednotebookliststore2, &iter);
+	gtk_list_store_set (windowvpanedhpanednotebookliststore2, &iter,
 	                    0, name,
 	                    1, buf,
 	                    -1);
@@ -310,10 +322,30 @@ void interface_init (int argc, char * argv []) {
 	gtk_tree_view_column_add_attribute (GTK_TREE_VIEW_COLUMN (col), GTK_CELL_RENDERER (cell), "text", 1);
 
 	windowvpanedhpanednotebooklabel2 = gtk_label_new ((const gchar *) "Sections");
+	windowvpanedhpanednotebookliststore2 = gtk_list_store_new (2, G_TYPE_STRING, G_TYPE_STRING);
+	windowvpanedhpanednotebooktreeview2 = gtk_tree_view_new_with_model (GTK_TREE_MODEL (windowvpanedhpanednotebookliststore2));
 	windowvpanedhpanednotebookscrolledwindow2 = gtk_scrolled_window_new (NULL, NULL);
+	gtk_container_add (GTK_CONTAINER (windowvpanedhpanednotebookscrolledwindow2), windowvpanedhpanednotebooktreeview2);
 	gtk_notebook_append_page (GTK_NOTEBOOK (windowvpanedhpanednotebook), windowvpanedhpanednotebookscrolledwindow2, windowvpanedhpanednotebooklabel2);
 	gtk_widget_show (windowvpanedhpanednotebooklabel2);
 	gtk_widget_show (windowvpanedhpanednotebookscrolledwindow2);
+	gtk_widget_show (windowvpanedhpanednotebooktreeview2);
+	/*gtk_list_store_append (windowvpanedhpanednotebookliststore1, &iter);
+	gtk_list_store_set (windowvpanedhpanednotebookliststore1, &iter,
+	                    0, "Hello, world",
+	                    1, 1231312,
+	                    -1);*/
+	col = gtk_tree_view_column_new ();
+	gtk_tree_view_column_set_title (col, "Name");
+	gtk_tree_view_column_pack_start (GTK_TREE_VIEW_COLUMN (col), GTK_CELL_RENDERER (cell), true);	
+	gtk_tree_view_append_column (GTK_TREE_VIEW (windowvpanedhpanednotebooktreeview2), col);
+	gtk_tree_view_column_add_attribute (GTK_TREE_VIEW_COLUMN (col), GTK_CELL_RENDERER (cell), "text", 0);
+	col = gtk_tree_view_column_new ();
+	gtk_tree_view_column_set_title (col, "Address");
+	cell = gtk_cell_renderer_text_new ();
+	gtk_tree_view_column_pack_start (GTK_TREE_VIEW_COLUMN (col), GTK_CELL_RENDERER (cell), true);
+	gtk_tree_view_append_column (GTK_TREE_VIEW (windowvpanedhpanednotebooktreeview2), col);
+	gtk_tree_view_column_add_attribute (GTK_TREE_VIEW_COLUMN (col), GTK_CELL_RENDERER (cell), "text", 1);	                    
 
 	windowcodebuffer = gtk_text_buffer_new (NULL);
 	windowvpanedhpanedtextview = gtk_text_view_new_with_buffer (windowcodebuffer);

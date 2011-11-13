@@ -82,6 +82,7 @@ void debug_loadsections () {
 		bfd_section * p;
 		for (p = bfdf -> sections; p != NULL; p = p -> next) {
 			sections [p -> name] = *p;
+			interface_section_add ((char *) p -> name, p -> vma);
 		}
 	#endif
 }
@@ -130,7 +131,9 @@ void debug_loadsymbols () {
 		for (i = 0; i < lsymbols; i ++) {
 			//printf ("%02.2i: %08.8p\t %s \n", i, symbol_table [i] -> value, symbol_table [i] -> name);
 			symbols [symbol_table [i] -> name] = *(symbol_table [i]);
-			interface_symbol_add ((char *) symbol_table [i] -> name, 0);
+			if (symbol_table [i] -> flags & BSF_FUNCTION) {
+				interface_symbol_add ((char *) symbol_table [i] -> name, symbol_table [i] -> section -> vma + symbol_table [i] -> value);
+			}
 		}
 		free (symbol_table);
 	#endif
@@ -150,7 +153,10 @@ void debug_printsymbols () {
 		printf ("Symbols: (%i)\n", symbols.size ());
 		std::map <std::string, asymbol> :: iterator it;
 		for (it = symbols.begin (); it != symbols.end (); it ++) {
-			printf ("\t%s\n", (*it).first.c_str ());
+			if ((*it).second.flags & BSF_FUNCTION) {
+				printf ("\t%s\n", (*it).first.c_str ());
+				printf ("\t\tRelative to %s (%lX)\n", (*it).second.section -> name, (*it).second.section -> vma);
+			}
 		}
 	#endif
 }
@@ -172,7 +178,7 @@ int debug_open (char * fn) {
 			return -1;
 		}
 	#endif
-	debug_printsections ();
+	debug_loadsections ();
 	debug_printsymbols ();
 	interface_set_progress (0);
 	return 0;

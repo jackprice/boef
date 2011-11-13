@@ -19,5 +19,6 @@ void interface_childpty_setup ();
 void interface_pty_setup (int fd);
 void interface_set_progress (double frac);
 void interface_symbol_add (char * name, unsigned int address);
+void interface_section_add (char * name, unsigned int address);
 
 #endif
