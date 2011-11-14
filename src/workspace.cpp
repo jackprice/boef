@@ -28,6 +28,7 @@ char * workspace_home = NULL;
 char * workspace_dir = NULL;
 char * workspace = "default";
 int workspace_id = 0;
+extern workspace_settings settings;
 
 #ifdef WITH_SQLITE3
 	sqlite3 * db = NULL;

@@ -29,8 +29,6 @@
 	#include <vte/vte.h>
 #endif
 
-char * authors [] = {"Quetuo <quetuo@quetuo.net>", NULL};
-
 GtkWidget * window;
 // Status bar
 GtkWidget * windowstatus;
@@ -137,12 +135,14 @@ void interface_open (GtkToolButton * button, gpointer user_data) {
 		if (debug_open (filename) == -1) {
 			interface_error ("Could not load file\n");
 		}
+		//settings.fn = strdup (filename);
 		g_free (filename);
 	}
 	gtk_widget_destroy (dialog);
 }
 
 void interface_run (GtkToolButton * button, gpointer user_data) {
+	interface_message ("Running");
 }
 
 void interface_symbol_add (char * name, unsigned int address) {
@@ -165,6 +165,34 @@ void interface_section_add (char * name, unsigned int address) {
 	                    0, name,
 	                    1, buf,
 	                    -1);
+}
+
+void interface_treeview1_act (GtkTreeView * tree_view, GtkTreePath * path, GtkTreeViewColumn * col, gpointer user_data) {
+	GtkTreeIter iter;
+	GtkTreeModel * model = gtk_tree_view_get_model (tree_view);
+	gtk_tree_model_get_iter (model, &iter, path);
+	GValue value = { 0, { { 0 } } };
+	gtk_tree_model_get_value (model, &iter, 0, &value);
+	char * val = (char *) g_strdup_value_contents (&value);
+	*(val + strlen (val) - 1) = 0x00;
+	val ++;
+	debug_print_function_disasm (val);
+}
+
+void interface_treeview2_act (GtkTreeView * tree_view, GtkTreePath * path, GtkTreeViewColumn * col, gpointer user_data) {
+	GtkTreeIter iter;
+	GtkTreeModel * model = gtk_tree_view_get_model (tree_view);
+	gtk_tree_model_get_iter (model, &iter, path);
+	GValue value = { 0, { { 0 } } };
+	gtk_tree_model_get_value (model, &iter, 0, &value);
+	char * val = (char *) g_strdup_value_contents (&value);
+	*(val + strlen (val) - 1) = 0x00;
+	val ++;
+	debug_print_section_disasm (val);
+}
+
+void interface_function_viewer (char * function) {
+	
 }
 
 void interface_set_status (char * status) {
@@ -320,6 +348,7 @@ void interface_init (int argc, char * argv []) {
 	gtk_tree_view_column_pack_start (GTK_TREE_VIEW_COLUMN (col), GTK_CELL_RENDERER (cell), true);
 	gtk_tree_view_append_column (GTK_TREE_VIEW (windowvpanedhpanednotebooktreeview1), col);
 	gtk_tree_view_column_add_attribute (GTK_TREE_VIEW_COLUMN (col), GTK_CELL_RENDERER (cell), "text", 1);
+	g_signal_connect (windowvpanedhpanednotebooktreeview1, "row-activated", G_CALLBACK (interface_treeview1_act), NULL);
 
 	windowvpanedhpanednotebooklabel2 = gtk_label_new ((const gchar *) "Sections");
 	windowvpanedhpanednotebookliststore2 = gtk_list_store_new (2, G_TYPE_STRING, G_TYPE_STRING);
@@ -345,7 +374,8 @@ void interface_init (int argc, char * argv []) {
 	cell = gtk_cell_renderer_text_new ();
 	gtk_tree_view_column_pack_start (GTK_TREE_VIEW_COLUMN (col), GTK_CELL_RENDERER (cell), true);
 	gtk_tree_view_append_column (GTK_TREE_VIEW (windowvpanedhpanednotebooktreeview2), col);
-	gtk_tree_view_column_add_attribute (GTK_TREE_VIEW_COLUMN (col), GTK_CELL_RENDERER (cell), "text", 1);	                    
+	gtk_tree_view_column_add_attribute (GTK_TREE_VIEW_COLUMN (col), GTK_CELL_RENDERER (cell), "text", 1);
+	g_signal_connect (windowvpanedhpanednotebooktreeview2, "row-activated", G_CALLBACK (interface_treeview2_act), NULL);
 
 	windowcodebuffer = gtk_text_buffer_new (NULL);
 	windowvpanedhpanedtextview = gtk_text_view_new_with_buffer (windowcodebuffer);
@@ -400,7 +430,7 @@ void interface_init (int argc, char * argv []) {
 	
 	// Workspace chooser
 	
-	
+	interface_new (NULL, NULL);
 	interface_workspace_chooser ();
 }
 

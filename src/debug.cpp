@@ -27,10 +27,19 @@
 #ifdef HAVE_LIBBFD
 	bfd * bfdf = NULL;
 	char * target = NULL;
-	std::map <std::string, asymbol> symbols;
-	std::map <std::string, bfd_section> sections;
+	std::map <std::string, asymbol *> symbols;
+	std::map <std::string, bfd_section *> sections;
 #endif
 std::vector <std::string> vulnfunctions;
+disassembler_ftype disassemble_fn = NULL;
+struct disassemble_info disasm_info;
+
+struct ASM_INSN {
+	char mnemonic [16];
+	char src [32];
+	char dest [32];
+	char arg [32];
+} curr_insn;
 
 int debug_ptrace_traceme () {
 	#ifdef __linux__
@@ -81,7 +90,7 @@ void debug_loadsections () {
 		sections.clear ();
 		bfd_section * p;
 		for (p = bfdf -> sections; p != NULL; p = p -> next) {
-			sections [p -> name] = *p;
+			sections [p -> name] = p;
 			interface_section_add ((char *) p -> name, p -> vma);
 		}
 	#endif
@@ -99,7 +108,7 @@ void debug_printsections () {
 			return;
 		}
 		printf ("Sections: (%i)\n", sections.size ());
-		std::map <std::string, bfd_section> :: iterator it;
+		std::map <std::string, bfd_section *> :: iterator it;
 		for (it = sections.begin (); it != sections.end (); it ++) {
 			printf ("\t%s\n", (*it).first.c_str ());
 		}
@@ -130,7 +139,7 @@ void debug_loadsymbols () {
 		}
 		for (i = 0; i < lsymbols; i ++) {
 			//printf ("%02.2i: %08.8p\t %s \n", i, symbol_table [i] -> value, symbol_table [i] -> name);
-			symbols [symbol_table [i] -> name] = *(symbol_table [i]);
+			symbols [symbol_table [i] -> name] = (symbol_table [i]);
 			if (symbol_table [i] -> flags & BSF_FUNCTION) {
 				interface_symbol_add ((char *) symbol_table [i] -> name, symbol_table [i] -> section -> vma + symbol_table [i] -> value);
 			}
@@ -151,14 +160,26 @@ void debug_printsymbols () {
 			return;
 		}
 		printf ("Symbols: (%i)\n", symbols.size ());
-		std::map <std::string, asymbol> :: iterator it;
+		std::map <std::string, asymbol *> :: iterator it;
 		for (it = symbols.begin (); it != symbols.end (); it ++) {
-			if ((*it).second.flags & BSF_FUNCTION) {
+			if ((*it).second -> flags & BSF_FUNCTION) {
 				printf ("\t%s\n", (*it).first.c_str ());
-				printf ("\t\tRelative to %s (%lX)\n", (*it).second.section -> name, (*it).second.section -> vma);
+				printf ("\t\tRelative to %s (%lX)\n", (*it).second -> section -> name, (*it).second -> section -> vma);
 			}
 		}
 	#endif
+}
+
+asymbol * debug_get_symbol_from_address (long addr) {
+	std::map <std::string, asymbol *> :: iterator it;
+	for (it = symbols.begin (); it != symbols.end (); it ++) {
+		if ((*it).second -> flags & BSF_FUNCTION) {
+			if (addr == it -> second -> value + it -> second -> section -> vma) {
+				return it -> second;
+			}
+		}
+	}
+	return NULL;
 }
 
 void debug_printstack () {
@@ -177,14 +198,109 @@ int debug_open (char * fn) {
 			bfd_perror (NULL);
 			return -1;
 		}
+		disassemble_fn = disassembler (bfdf);
+		disasm_info.arch = bfd_get_arch (bfdf);
+		disasm_info.mach = bfd_get_mach (bfdf);
+		if (bfd_big_endian (bfdf)) {
+			disasm_info.endian = BFD_ENDIAN_BIG;
+		}
+		else if (bfd_little_endian (bfdf)) {
+			disasm_info.endian = BFD_ENDIAN_LITTLE;
+		}
 	#endif
 	debug_loadsections ();
 	debug_printsymbols ();
 	interface_set_progress (0);
+	debug_print_function_disasm ("main");
 	return 0;
 }
 
 void debug_printinfo () {
 	debug_printsections ();
 	debug_printsymbols ();
+}
+
+void debug_print_function_disasm (char * function) {
+	std::map <std::string, asymbol *> :: iterator it;
+	for (it = symbols.begin (); it != symbols.end (); it ++) {
+		if ((*it).first == function) {
+			asection * s = it -> second -> section;
+			printf ("Disassembling %s\n", s -> name);
+			long size = bfd_section_size (bfdf, s);
+			void * buf = malloc (s -> lma);
+			if (bfd_get_section_contents (bfdf, s, buf, 0, size) == false) {
+				bfd_perror (NULL);
+				interface_error ("Could not read section contents");
+				return;
+			}
+			struct disassemble_info info;
+			init_disassemble_info (&info, stdout, (fprintf_ftype) fprintf);
+			info.mach = bfd_get_mach (bfdf);
+			info.endian = BFD_ENDIAN_LITTLE;
+			info.buffer = (bfd_byte *) buf;
+			info.buffer_length = s -> lma;
+			long vma = s -> vma;
+			info.buffer += it -> second -> value;
+			vma += it -> second -> value;
+			while ((void *)info.buffer < buf + size) {
+				printf ("\n");
+				asymbol * ss = debug_get_symbol_from_address (vma);
+				if (ss != NULL) {
+					printf ("\n<%s>\n", ss -> name);
+				}
+				printf ("\t0x%lX:\t", vma);
+				int b = disassemble_fn (0, &info);
+				if (*(info.buffer) == 0xC3) {
+					break;
+				}
+				info.buffer += b;
+				vma += b;
+				if (b == 0) {
+					info.buffer += 1;
+					vma += 1;
+				}
+			}
+			printf ("\n");
+		}
+	}
+}
+
+void debug_print_section_disasm (char * section) {
+	std::map <std::string, bfd_section *> :: iterator it;
+	for (it = sections.begin (); it != sections.end (); it ++) {
+		if ((*it).first == section) {			
+			asection * s = bfd_get_section_by_name (bfdf, (const char *) section);
+			printf ("Disassembling %s\n", s -> name);
+			long size = bfd_section_size (bfdf, s);
+			void * buf = malloc (s -> lma);
+			if (bfd_get_section_contents (bfdf, s, buf, 0, size) == false) {
+				bfd_perror (NULL);
+				interface_error ("Could not read section contents");
+				return;
+			}
+			struct disassemble_info info;
+			init_disassemble_info (&info, stdout, (fprintf_ftype) fprintf);
+			info.mach = bfd_get_mach (bfdf);
+			info.endian = BFD_ENDIAN_LITTLE;
+			info.buffer = (bfd_byte *) buf;
+			info.buffer_length = s -> lma;
+			long vma = s -> vma;
+			while ((void *)info.buffer < buf + size) {
+				printf ("\n");
+				asymbol * ss = debug_get_symbol_from_address (vma);
+				if (ss != NULL) {
+					printf ("\n<%s>\n", ss -> name);
+				}
+				printf ("\t0x%lX:\t", vma);
+				int b = disassemble_fn (0, &info);
+				info.buffer += b;
+				vma += b;
+				if (b == 0) {
+					info.buffer += 1;
+					vma += 1;
+				}
+			}
+			printf ("\n");
+		}
+	}
 }

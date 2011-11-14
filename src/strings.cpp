@@ -24,6 +24,7 @@
 
 #include "include.h"
 
+extern char * authors [] = {"Quetuo <quetuo@quetuo.net>", NULL};
 extern char LICENSE [] = "                    GNU GENERAL PUBLIC LICENSE\n"
 "                       Version 3, 29 June 2007\n"
 "\n"

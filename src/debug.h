@@ -19,5 +19,7 @@ void debug_init ();
 void debug_cleanup ();
 int debug_open (char * fn);
 void debug_printinfo ();
+void debug_print_function_disasm (char * function);
+void debug_print_section_disasm (char * section);
 
 #endif
