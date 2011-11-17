@@ -171,14 +171,16 @@ void debug_printsymbols () {
 }
 
 asymbol * debug_get_symbol_from_address (long addr) {
-	std::map <std::string, asymbol *> :: iterator it;
-	for (it = symbols.begin (); it != symbols.end (); it ++) {
-		if ((*it).second -> flags & BSF_FUNCTION) {
-			if (addr == it -> second -> value + it -> second -> section -> vma) {
-				return it -> second;
+	#ifdef HAVE_LIBBFD
+		std::map <std::string, asymbol *> :: iterator it;
+		for (it = symbols.begin (); it != symbols.end (); it ++) {
+			if ((*it).second -> flags & BSF_FUNCTION) {
+				if (addr == it -> second -> value + it -> second -> section -> vma) {
+					return it -> second;
+				}
 			}
 		}
-	}
+	#endif
 	return NULL;
 }
 
@@ -221,86 +223,90 @@ void debug_printinfo () {
 }
 
 void debug_print_function_disasm (char * function) {
-	std::map <std::string, asymbol *> :: iterator it;
-	for (it = symbols.begin (); it != symbols.end (); it ++) {
-		if ((*it).first == function) {
-			asection * s = it -> second -> section;
-			printf ("Disassembling %s\n", s -> name);
-			long size = bfd_section_size (bfdf, s);
-			void * buf = malloc (s -> lma);
-			if (bfd_get_section_contents (bfdf, s, buf, 0, size) == false) {
-				bfd_perror (NULL);
-				interface_error ("Could not read section contents");
-				return;
-			}
-			struct disassemble_info info;
-			init_disassemble_info (&info, stdout, (fprintf_ftype) fprintf);
-			info.mach = bfd_get_mach (bfdf);
-			info.endian = BFD_ENDIAN_LITTLE;
-			info.buffer = (bfd_byte *) buf;
-			info.buffer_length = s -> lma;
-			long vma = s -> vma;
-			info.buffer += it -> second -> value;
-			vma += it -> second -> value;
-			while ((void *)info.buffer < buf + size) {
+	#ifdef HAVE_LIBBFD
+		std::map <std::string, asymbol *> :: iterator it;
+		for (it = symbols.begin (); it != symbols.end (); it ++) {
+			if ((*it).first == function) {
+				asection * s = it -> second -> section;
+				printf ("Disassembling %s\n", s -> name);
+				long size = bfd_section_size (bfdf, s);
+				void * buf = malloc (s -> lma);
+				if (bfd_get_section_contents (bfdf, s, buf, 0, size) == false) {
+					bfd_perror (NULL);
+					interface_error ("Could not read section contents");
+					return;
+				}
+				struct disassemble_info info;
+				init_disassemble_info (&info, stdout, (fprintf_ftype) fprintf);
+				info.mach = bfd_get_mach (bfdf);
+				info.endian = BFD_ENDIAN_LITTLE;
+				info.buffer = (bfd_byte *) buf;
+				info.buffer_length = s -> lma;
+				long vma = s -> vma;
+				info.buffer += it -> second -> value;
+				vma += it -> second -> value;
+				while ((void *)info.buffer < buf + size) {
+					printf ("\n");
+					asymbol * ss = debug_get_symbol_from_address (vma);
+					if (ss != NULL) {
+						printf ("\n<%s>\n", ss -> name);
+					}
+					printf ("\t0x%lX:\t", vma);
+					int b = disassemble_fn (0, &info);
+					if (*(info.buffer) == 0xC3) {
+						break;
+					}
+					info.buffer += b;
+					vma += b;
+					if (b == 0) {
+						info.buffer += 1;
+						vma += 1;
+					}
+				}
 				printf ("\n");
-				asymbol * ss = debug_get_symbol_from_address (vma);
-				if (ss != NULL) {
-					printf ("\n<%s>\n", ss -> name);
-				}
-				printf ("\t0x%lX:\t", vma);
-				int b = disassemble_fn (0, &info);
-				if (*(info.buffer) == 0xC3) {
-					break;
-				}
-				info.buffer += b;
-				vma += b;
-				if (b == 0) {
-					info.buffer += 1;
-					vma += 1;
-				}
 			}
-			printf ("\n");
 		}
-	}
+	#endif
 }
 
 void debug_print_section_disasm (char * section) {
-	std::map <std::string, bfd_section *> :: iterator it;
-	for (it = sections.begin (); it != sections.end (); it ++) {
-		if ((*it).first == section) {			
-			asection * s = bfd_get_section_by_name (bfdf, (const char *) section);
-			printf ("Disassembling %s\n", s -> name);
-			long size = bfd_section_size (bfdf, s);
-			void * buf = malloc (s -> lma);
-			if (bfd_get_section_contents (bfdf, s, buf, 0, size) == false) {
-				bfd_perror (NULL);
-				interface_error ("Could not read section contents");
-				return;
-			}
-			struct disassemble_info info;
-			init_disassemble_info (&info, stdout, (fprintf_ftype) fprintf);
-			info.mach = bfd_get_mach (bfdf);
-			info.endian = BFD_ENDIAN_LITTLE;
-			info.buffer = (bfd_byte *) buf;
-			info.buffer_length = s -> lma;
-			long vma = s -> vma;
-			while ((void *)info.buffer < buf + size) {
+	#ifdef HAVE_LIBBFD
+		std::map <std::string, bfd_section *> :: iterator it;
+		for (it = sections.begin (); it != sections.end (); it ++) {
+			if ((*it).first == section) {			
+				asection * s = bfd_get_section_by_name (bfdf, (const char *) section);
+				printf ("Disassembling %s\n", s -> name);
+				long size = bfd_section_size (bfdf, s);
+				void * buf = malloc (s -> lma);
+				if (bfd_get_section_contents (bfdf, s, buf, 0, size) == false) {
+					bfd_perror (NULL);
+					interface_error ("Could not read section contents");
+					return;
+				}
+				struct disassemble_info info;
+				init_disassemble_info (&info, stdout, (fprintf_ftype) fprintf);
+				info.mach = bfd_get_mach (bfdf);
+				info.endian = BFD_ENDIAN_LITTLE;
+				info.buffer = (bfd_byte *) buf;
+				info.buffer_length = s -> lma;
+				long vma = s -> vma;
+				while ((void *)info.buffer < buf + size) {
+					printf ("\n");
+					asymbol * ss = debug_get_symbol_from_address (vma);
+					if (ss != NULL) {
+						printf ("\n<%s>\n", ss -> name);
+					}
+					printf ("\t0x%lX:\t", vma);
+					int b = disassemble_fn (0, &info);
+					info.buffer += b;
+					vma += b;
+					if (b == 0) {
+						info.buffer += 1;
+						vma += 1;
+					}
+				}
 				printf ("\n");
-				asymbol * ss = debug_get_symbol_from_address (vma);
-				if (ss != NULL) {
-					printf ("\n<%s>\n", ss -> name);
-				}
-				printf ("\t0x%lX:\t", vma);
-				int b = disassemble_fn (0, &info);
-				info.buffer += b;
-				vma += b;
-				if (b == 0) {
-					info.buffer += 1;
-					vma += 1;
-				}
 			}
-			printf ("\n");
 		}
-	}
+	#endif
 }
