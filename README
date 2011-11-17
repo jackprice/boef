@@ -1,0 +1,38 @@
+                           ### README for Boef ###                              
+
+Boef (Buffer Overflow Exploitation Framework) is, as the name would imply, a 
+buffer overflow exploitation framework.
+
+## Compiling ##
+To build Boef, run:
+
+    ./configure
+    make
+
+To install Boef (by default to /usr/local/bin):
+
+    make install
+
+## Reporting Bugs ##
+To report a bug, gather as much information about the bug as possible, 
+including:
+    The conditions required to replicate the bug
+    The system on which the bug occurred (uname -a)
+    Any relevant stack traces / core dumps
+
+Then either:
+    Email the author (quetuo@quetuo.net) with your bug report
+    Email the Boef mailing list (boef-developer@lists.sourceforge.net)
+
+## Versioning ##
+Boef is working towards a version 1.0 in which all the project's aims are 
+implemented.  Each new major feature or milestone increments the minor version 
+by one.  The initial version was 0.1, and development continues towards 1.0 
+from there.  0.2 (the next version) will be reached when the framework can be 
+used standalone to develop a fully working exploit for a simple test program. 
+
+## Contributing ##
+Boef is an open-source GNU GPL-licensed project, and I appreciate any 
+contributions whatsoever, whether testing, bug fixes, feature coding etc. 
+Email the author (quetuo@quetuo.net) for more information, or email your patch 
+etc. to boef-developer@lists.sourceforge.net

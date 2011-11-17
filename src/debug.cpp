@@ -209,9 +209,8 @@ int debug_open (char * fn) {
 		}
 	#endif
 	debug_loadsections ();
-	debug_printsymbols ();
+	debug_loadsymbols ();
 	interface_set_progress (0);
-	debug_print_function_disasm ("main");
 	return 0;
 }
 
@@ -234,7 +233,8 @@ void debug_print_function_disasm (char * function) {
 				return;
 			}
 			struct disassemble_info info;
-			init_disassemble_info (&info, stdout, (fprintf_ftype) fprintf);
+			char * ins = (char *) malloc (30);
+			init_disassemble_info (&info, ins, (fprintf_ftype) sprintf);
 			info.mach = bfd_get_mach (bfdf);
 			info.endian = BFD_ENDIAN_LITTLE;
 			info.buffer = (bfd_byte *) buf;
@@ -243,14 +243,13 @@ void debug_print_function_disasm (char * function) {
 			info.buffer += it -> second -> value;
 			vma += it -> second -> value;
 			while ((void *)info.buffer < buf + size) {
-				printf ("\n");
 				asymbol * ss = debug_get_symbol_from_address (vma);
 				if (ss != NULL) {
-					printf ("\n<%s>\n", ss -> name);
+					printf ("<%s>\n", ss -> name);
 				}
-				printf ("\t0x%lX:\t", vma);
+				printf ("\t0x%lX:%s\n", vma, ins);
 				int b = disassemble_fn (0, &info);
-				if (*(info.buffer) == 0xC3) {
+				if (*(info.buffer) == 0xC3 || *(info.buffer) == 0xC2 || *(info.buffer) == 0xCA || *(info.buffer) == 0xCB) {
 					break;
 				}
 				info.buffer += b;
@@ -260,6 +259,7 @@ void debug_print_function_disasm (char * function) {
 					vma += 1;
 				}
 			}
+			free (ins);
 			printf ("\n");
 		}
 	}
